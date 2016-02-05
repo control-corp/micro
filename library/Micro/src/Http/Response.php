@@ -116,7 +116,18 @@ class Response extends Message implements ResponseInterface
     {
         $this->status = $this->filterStatus($status);
         $this->headers = $headers ? $headers : [];
-        $this->body = $body ? $body : new Body(fopen('php://temp', 'r+'));
+        $this->body = $body ? $body : new Stream(fopen('php://temp', 'r+'));
+    }
+
+    /**
+     * This method is applied to the cloned object
+     * after PHP performs an initial shallow-copy. This
+     * method completes a deep-copy by creating new objects
+     * for the cloned object's internal reference pointers.
+     */
+    public function __clone()
+    {
+        $this->body = clone $this->body;
     }
 
     /*******************************************************************************

@@ -3,7 +3,7 @@
 namespace Micro\Http\Response;
 
 use Micro\Http\Response;
-use Micro\Http\Body;
+use Micro\Http\Stream;
 use InvalidArgumentException;
 
 /**
@@ -50,7 +50,7 @@ class JsonResponse extends Response
         array $headers = [],
         $encodingOptions = self::DEFAULT_JSON_FLAGS
     ) {
-        $body = new Body(fopen('php://temp', 'r+'));
+        $body = new Stream(fopen('php://temp', 'r+'));
         $body->write($this->jsonEncode($data, $encodingOptions));
         $body->rewind();
         parent::__construct($status, ($headers + ['Content-Type' => ['application/json']]), $body);

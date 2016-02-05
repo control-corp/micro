@@ -5,7 +5,7 @@ namespace Micro\Http;
 /**
  * Provides a PSR-7 implementation of a reusable raw request body
  */
-class RequestBody extends Body
+class RequestBody extends Stream
 {
     /**
      * Create a new RequestBody.

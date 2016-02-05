@@ -22,6 +22,9 @@ class Log implements LogInterface
 	    static::$logger->write($message, $type);
 	}
 
+	/**
+	 * Register error handler
+	 */
 	public static function register()
 	{
 	    set_error_handler(array('Micro\Log\Log', 'errorHandler'));
@@ -36,7 +39,7 @@ class Log implements LogInterface
 	 */
 	public static function errorHandler($errno, $errstr, $errfile, $errline)
 	{
-	    static::$logger->write('(' . $errno . ') ' . $errstr . ' ' . $errfile . ' ' . $errline, 'errors');
+	    static::getLogger()->write('(' . $errno . ') ' . $errstr . ' ' . $errfile . ' ' . $errline, 'errors');
 
 	    return false;
 	}

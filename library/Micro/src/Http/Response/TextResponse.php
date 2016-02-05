@@ -3,7 +3,7 @@
 namespace Micro\Http\Response;
 
 use Micro\Http\Response;
-use Micro\Http\Body;
+use Micro\Http\Stream;
 use InvalidArgumentException;
 use Psr\Http\Message\StreamInterface;
 
@@ -57,7 +57,7 @@ class TextResponse extends Response
             ));
         }
 
-        $body = new Body(fopen('php://temp', 'r+'));
+        $body = new Stream(fopen('php://temp', 'r+'));
         $body->write($text);
         $body->rewind();
         return $body;
