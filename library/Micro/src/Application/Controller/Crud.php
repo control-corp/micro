@@ -26,8 +26,7 @@ class Crud extends Controller
         $controller = $this->request->getParam('controller');
 
         if ($this->request->isPost()) {
-            $post = $this->request->getPost();
-            if (isset($post['btnAdd'])) {
+            if ($this->request->getParsedBodyParam('btnAdd')) {
                 return new RedirectResponse(route(\null, ['action' => 'add', 'id' => \null, 'page' => \null]));
             }
         }
@@ -106,7 +105,7 @@ class Crud extends Controller
 
         if ($this->request->isPost()) {
 
-            $post = $this->request->getPost();
+            $post = $this->request->getParsedBody();
 
             if (isset($post['btnBack'])) {
                 return new RedirectResponse(route(\null, ['action' => 'index', 'id' => \null]));
@@ -325,7 +324,7 @@ class Crud extends Controller
 
         if ($this->request->isPost()) {
 
-            $post = $this->request->getPost($key, []);
+            $post = $this->request->getParsedBodyParam($key, []);
 
             if (isset($post['reset'])) {
                 return new RedirectResponse(route(\null, [$key => \null] + $clearParams));

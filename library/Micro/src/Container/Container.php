@@ -47,7 +47,7 @@ class Container implements ContainerInterface
     /**
      * @return Container
      */
-    public static function getInstance($name)
+    public static function getInstance()
     {
         return static::$instance;
     }

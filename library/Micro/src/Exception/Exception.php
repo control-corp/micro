@@ -20,6 +20,6 @@ class Exception extends \Exception
 
 	public static function exceptionHandler(\Exception $e)
 	{
-	    Log::write('(' . (int) $e->getCode() . ') ' . strip_tags($e->getMessage()) . ' - ' . $_SERVER['REMOTE_ADDR'] . ' - ' . $_SERVER['REQUEST_URI'], 'exceptions');
+	    Log::getLogger()->write('(' . (int) $e->getCode() . ') ' . \strip_tags($e->getMessage()) . ' - ' . $_SERVER['REMOTE_ADDR'] . ' - ' . $_SERVER['REQUEST_URI'], 'exceptions');
 	}
 }

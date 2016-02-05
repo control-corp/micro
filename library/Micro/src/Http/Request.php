@@ -146,7 +146,7 @@ class Request extends Message implements ServerRequestInterface
             $key = strtoupper($key);
             if (isset($special[$key]) || strpos($key, 'HTTP_') === 0) {
                 if ($key !== 'HTTP_CONTENT_LENGTH') {
-                    $headers[$key] = $value;
+                    $headers[static::normalizeHeaderKey($key)] = [$value];
                 }
             }
         }
@@ -155,7 +155,7 @@ class Request extends Message implements ServerRequestInterface
 
         $cookies = [];
 
-        $cookieHeader = isset($headers['Cookie']) ? $headers['Cookie'] : [];
+        $cookieHeader = isset($headers['cookie']) ? $headers['cookie'] : [];
 
         if (is_array($cookieHeader) === true) {
             $cookieHeader = isset($cookieHeader[0]) ? $cookieHeader[0] : '';
@@ -229,8 +229,8 @@ class Request extends Message implements ServerRequestInterface
             $this->protocolVersion = str_replace('HTTP/', '', $serverParams['SERVER_PROTOCOL']);
         }
 
-        if (!isset($this->headers['Host']) || $this->uri->getHost() !== '') {
-            $this->headers['Host'] = [$this->uri->getHost()];
+        if (!isset($this->headers['host']) || $this->uri->getHost() !== '') {
+            $this->headers['host'] = [$this->uri->getHost()];
         }
 
         $this->registerMediaTypeParser('application/json', function ($input) {
@@ -266,7 +266,7 @@ class Request extends Message implements ServerRequestInterface
     {
         if ($this->method === null) {
             $this->method = $this->originalMethod;
-            $customMethod = $this->getHeaderLine('X-Http-Method-Override');
+            $customMethod = $this->getHeaderLine('x-http-method-override');
 
             if ($customMethod) {
                 $this->method = $this->filterMethod($customMethod);
@@ -458,9 +458,9 @@ class Request extends Message implements ServerRequestInterface
      *
      * @return bool
      */
-    public function isXhr()
+    public function isAjax()
     {
-        return $this->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+        return $this->getHeaderLine('x-requested-with') === 'XMLHttpRequest';
     }
 
     /**
@@ -583,11 +583,11 @@ class Request extends Message implements ServerRequestInterface
 
         if (!$preserveHost) {
             if ($uri->getHost() !== '') {
-                $this->headers['Host'] = [$uri->getHost()];
+                $this->headers['host'] = [$uri->getHost()];
             }
         } else {
-            if ($this->uri->getHost() !== '' && !isset($this->headers['Host'])) {
-                $this->headers['Host'] = [$uri->getHost()];
+            if ($this->uri->getHost() !== '' && !isset($this->headers['host'])) {
+                $this->headers['host'] = [$uri->getHost()];
             }
         }
 
@@ -603,7 +603,7 @@ class Request extends Message implements ServerRequestInterface
      */
     public function getContentType()
     {
-        $result = $this->getHeader('Content-Type');
+        $result = $this->getHeader('content-type');
 
         return $result ? $result[0] : null;
     }
@@ -676,7 +676,7 @@ class Request extends Message implements ServerRequestInterface
      */
     public function getContentLength()
     {
-        $result = $this->getHeader('Content-Lenght');
+        $result = $this->getHeader('content-lenght');
 
         return $result ? (int) $result[0] : null;
     }
@@ -838,7 +838,7 @@ class Request extends Message implements ServerRequestInterface
      */
     public function getAttributes()
     {
-        return $this->attributes->all();
+        return $this->attributes;
     }
 
     /**
@@ -858,7 +858,7 @@ class Request extends Message implements ServerRequestInterface
      */
     public function getAttribute($name, $default = null)
     {
-        return $this->attributes->get($name, $default);
+        return isset($this->attributes[$name]) ? $this->attributes[$name] : $default;
     }
 
     /**
@@ -1040,8 +1040,12 @@ class Request extends Message implements ServerRequestInterface
     {
         $postParams = $this->getParsedBody();
         $getParams = $this->getQueryParams();
+        $attributes = $this->getAttributes();
+
         $result = $default;
-        if (is_array($postParams) && isset($postParams[$key])) {
+        if (is_array($attributes) && isset($attributes[$key])) {
+            $result = $attributes[$key];
+        } elseif (is_array($postParams) && isset($postParams[$key])) {
             $result = $postParams[$key];
         } elseif (is_object($postParams) && property_exists($postParams, $key)) {
             $result = $postParams->$key;
@@ -1112,5 +1116,15 @@ class Request extends Message implements ServerRequestInterface
         }
 
         return $params;
+    }
+
+    public static function normalizeHeaderKey($key)
+    {
+        $key = strtr(strtolower($key), '_', '-');
+        if (strpos($key, 'http-') === 0) {
+            $key = substr($key, 5);
+        }
+
+        return $key;
     }
 }

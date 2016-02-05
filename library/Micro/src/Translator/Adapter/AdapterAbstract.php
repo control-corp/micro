@@ -18,7 +18,7 @@ abstract class AdapterAbstract implements AdapterInterface
         ) {
             $code = $language->getCode();
         } else {
-            $code = config('language.default');
+            $code = $container->get('config')->get('language.default');
         }
 
         if ($code === \null) {

@@ -11,15 +11,15 @@ use Micro\Auth\Auth;
 use Micro\Helper\Flash;
 
 if (!function_exists('app')) {
-    function app($service = \null, $app = 'app')
+    function app($service = \null)
     {
-        $container = Container::getInstance($app);
+        $container = Container::getInstance();
 
         if ($service !== \null) {
             return $container->get($service);
         }
 
-        return $container;
+        return $container->get('app');
     }
 }
 
@@ -116,7 +116,7 @@ if (!function_exists('route')) {
 if (!function_exists('base_url')) {
     function base_url($path = \null)
     {
-        $baseUrl = app('request')->getBaseUrl();
+        $baseUrl = app('request')->getUri()->getBasePath();
 
         if ($path !== \null) {
             $baseUrl .= '/' . trim($path, '/\\');
@@ -129,8 +129,8 @@ if (!function_exists('base_url')) {
 if (!function_exists('server_url')) {
     function server_url($path = \null)
     {
-        $request   = app('request');
-        $serverUrl = $request->getScheme() . '://' . $request->getHttpHost();
+        $request   = app('request')->getUri();
+        $serverUrl = $request->getScheme() . '://' . $request->getHost();
 
         if ($path !== \null) {
             $serverUrl .= '/' . trim($path, '/\\');

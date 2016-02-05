@@ -3,7 +3,7 @@
 namespace Micro\Router;
 
 use Micro\Exception\Exception as CoreException;
-use Micro\Http;
+use Micro\Http\Request;
 use Micro\Application\Utils;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
@@ -43,33 +43,23 @@ class Router implements ContainerAwareInterface
     const URL_DELIMITER = '/';
 
     /**
-     * @param \Micro\Http\Request $request
+     * @param Request $requestUri
+     * @return Route|null
      */
-    public function __construct(Http\Request $request)
+    public function match(Request $request)
     {
-        $this->request = $request;
-    }
+        $uri = static::URL_DELIMITER . ltrim($request->getUri()->getPath(), static::URL_DELIMITER);
 
-    /**
-     * @param string|null $requestUri
-     * @return \Micro\Router\Route|null
-     */
-    public function match($requestUri = \null)
-    {
-        if ($requestUri === \null) {
-            $requestUri = $this->request->getUri()->getPath();
+        if ($uri !== static::URL_DELIMITER) {
+            $uri = rtrim($uri, static::URL_DELIMITER);
         }
 
-        if ($requestUri !== static::URL_DELIMITER) {
-            $requestUri = rtrim($requestUri, static::URL_DELIMITER);
-        }
-
-        if (isset($this->routesStatic[$requestUri])) {
-            return $this->currentRoute = $this->routes[$this->routesStatic[$requestUri]];
+        if (isset($this->routesStatic[$uri])) {
+            return $this->currentRoute = $this->routes[$this->routesStatic[$uri]];
         }
 
         foreach ($this->routes as $route) {
-            if ($route instanceof Route && $route->match($requestUri)) {
+            if ($route instanceof Route && $route->match($uri)) {
                 return $this->currentRoute = $route;
             }
         }
@@ -89,7 +79,7 @@ class Router implements ContainerAwareInterface
         if (\null === $name) {
             $name = preg_replace('~[^\w]~', '-', $pattern);
             $name = preg_replace('~[\-]+~', '-', $name);
-            $name = 'route-' . trim($name, '-');
+            $name = trim('route-' . trim($name, '-'), '-');
         }
 
         if (isset($this->routes[$name])) {
@@ -121,7 +111,7 @@ class Router implements ContainerAwareInterface
      */
     public function assemble($name, array $data = [], $reset = \false, $qsa = \true)
     {
-        static $baseUrl;
+        static $request, $basePath;
 
         if ($name === \null && $this->currentRoute instanceof Route) {
             $name = $this->currentRoute->getName();
@@ -143,26 +133,29 @@ class Router implements ContainerAwareInterface
             $url = $route->assemble($data, $reset);
         }
 
+        if ($request === null) {
+            $request = $this->container->get('request');
+            if ($basePath === null) {
+                $basePath = $request->getUri()->getBasePath();
+            }
+        }
+
         if ($qsa === \true) {
 
-            $qs = $this->request->getQuery();
+            $qs = $request->getQueryParams();
+
+            $data = array_filter($data);
 
             if (!empty($data)) {
                 $qs = $data + $qs;
             }
-
-            $qs = array_filter($qs);
 
             if (!empty($qs)) {
                 $url .= '?' . http_build_query($qs);
             }
         }
 
-        if ($baseUrl === \null) {
-            $baseUrl = $this->request->getBaseUrl();
-        }
-
-        return $baseUrl . static::URL_DELIMITER . trim($url, static::URL_DELIMITER);
+        return $basePath . static::URL_DELIMITER . trim($url, static::URL_DELIMITER);
     }
 
     /**

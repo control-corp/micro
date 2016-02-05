@@ -577,6 +577,7 @@ class Uri implements UriInterface
         if (!is_string($basePath)) {
             throw new InvalidArgumentException('Uri path must be a string');
         }
+
         if (!empty($basePath)) {
             $basePath = '/' . trim($basePath, '/'); // <-- Trim on both sides
         }

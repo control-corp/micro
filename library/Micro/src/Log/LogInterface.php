@@ -4,5 +4,5 @@ namespace Micro\Log;
 
 interface LogInterface
 {
-    public static function write($message, $type);
+    public function write($message, $type);
 }

@@ -13,15 +13,10 @@ class Log implements LogInterface
      * @param string $message
      * @param string $type
      */
-	public static function write($message, $type = 'logs')
+	public function write($message, $type = 'logs')
 	{
-	    if (\null === static::$logger) {
-
-    	    if (!config('log.enabled') || (!$handler = config('log.path'))) return;
-
-            file_put_contents(rtrim($handler, '/') . '/' . $type . '.txt', date('d M Y (h:m:i)') . ' - ' . $message . "\n", FILE_APPEND | LOCK_EX);
-
-    	    return;
+	    if (static::$logger === \null) {
+	        throw new \Exception('Logger is not set');
 	    }
 
 	    static::$logger->write($message, $type);
@@ -41,7 +36,7 @@ class Log implements LogInterface
 	 */
 	public static function errorHandler($errno, $errstr, $errfile, $errline)
 	{
-	    self::write('(' . $errno . ') ' . $errstr . ' ' . $errfile . ' ' . $errline, 'errors');
+	    static::$logger->write('(' . $errno . ') ' . $errstr . ' ' . $errfile . ' ' . $errline, 'errors');
 
 	    return false;
 	}
@@ -52,5 +47,13 @@ class Log implements LogInterface
 	public static function setLogger(LogInterface $logger)
 	{
         static::$logger = $logger;
+	}
+
+	/**
+	 * @return LogInterface $logger
+	 */
+	public static function getLogger()
+	{
+	    return static::$logger;
 	}
 }

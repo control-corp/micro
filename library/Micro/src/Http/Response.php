@@ -433,4 +433,11 @@ class Response extends Message implements ResponseInterface
 
         return $output;
     }
+
+    public function withFlash($message = \null, $type = 'success')
+    {
+        \flash()->setMessage($message, $type);
+
+        return $this;
+    }
 }

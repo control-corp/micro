@@ -48,7 +48,7 @@ class Page extends AbstractPage
     public function detectUri()
     {
         if (\null === $this->active) {
-            if (preg_match('~^' . preg_quote(app('request')->getRequestUri()). '$~ius', $this->uri)) {
+            if (preg_match('~^' . preg_quote(app('request')->getUri()->getPath()). '$~ius', $this->uri)) {
                 $this->active = \true;
             } else {
                 $this->active = \false;

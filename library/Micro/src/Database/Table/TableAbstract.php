@@ -513,7 +513,7 @@ abstract class TableAbstract
             return null;
         }
         if (!$db instanceof AdapterAbstract) {
-            throw new Exception('Argument must be of type \Micro\Database\Adapter\AdapterAbstract, or a Registry key where a \Micro\Database\Adapter\AdapterAbstract object is stored');
+            throw new Exception('Argument must be of type \Micro\Database\Adapter\AdapterAbstract');
         }
         return $db;
     }
