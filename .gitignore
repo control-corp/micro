@@ -6,3 +6,6 @@
 /application/data/log
 /data/log/errors.txt
 /data/log/exceptions.txt
+/composer.phar
+/vendor
+/composer.lock
