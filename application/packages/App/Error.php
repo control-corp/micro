@@ -5,10 +5,12 @@ namespace App;
 use Micro\Http\Response\JsonResponse;
 use Micro\Application\Resolver\ResolverAwareInterface;
 use Micro\Application\Resolver\ResolverAwareTrait;
+use Micro\Container\ContainerAwareInterface;
+use Micro\Container\ContainerAwareTrait;
 
-class Error implements ResolverAwareInterface
+class Error implements ResolverAwareInterface, ContainerAwareInterface
 {
-    use ResolverAwareTrait;
+    use ResolverAwareTrait, ContainerAwareTrait;
 
     const ERROR = 'Error !';
 

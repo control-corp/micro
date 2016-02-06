@@ -40,16 +40,6 @@ class Route
     protected $params = [];
 
     /**
-     * @var array
-     */
-    protected $paramsOptional = [];
-
-    /**
-     * @var array
-     */
-    protected $paramsRequired = [];
-
-    /**
      * @param string $name
      * @param string $pattern
      * @param \Closure|string $handler
@@ -82,7 +72,7 @@ class Route
      */
     public function match($requestUri)
     {
-        if (preg_match('~^' . $this->compile() . '$~ius', $requestUri, $matches)) {
+        if (preg_match('~^' . $this->compile() . '$~', $requestUri, $matches)) {
 
             foreach ($this->params as $k => $v) {
                 if (isset($matches[$k])) {
@@ -104,41 +94,29 @@ class Route
     {
         if ($this->compiled === \null) {
 
-            $this->compiled = $this->pattern;
+            $compiled = '';
 
-            $lambdaOptional = function ($match) {
+            if (preg_match_all('~(\[)?([^{}\[\]]*){([^}]+)}([^{}\[\]]*)(\])?~', $this->pattern, $matches)) {
 
-                $regex = '\w+';
+                foreach ($matches[3] as $k => $param) {
 
-                $this->paramsOptional[$match[2]] = isset($this->defaults[$match[2]]) ? $this->defaults[$match[2]] : \null;
+                    $regex = '[^/]+';
 
-                if (isset($this->conditions[$match[2]])) {
-                    $regex = $this->conditions[$match[2]];
+                    if (isset($this->conditions[$param])) {
+                        $regex = $this->conditions[$param];
+                    }
+
+                    if ($matches[1][$k] === '[') {
+                        $compiled .= '(' . preg_quote($matches[2][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[4][$k]) . ')?';
+                    } else {
+                        $compiled .= preg_quote($matches[2][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[4][$k]);
+                    }
+
+                    $this->params[$param] = isset($this->defaults[$param]) ? $this->defaults[$param] : \null;
                 }
+            }
 
-                return '(' . $match[1] . '(?P<' . $match[2] . '>' . $regex . ')' . $match[3] . ')?';
-
-            };
-
-            $this->compiled = preg_replace_callback('~\[([^\]]*){([^}]+)}([^\]]*)\]~ius', $lambdaOptional->bindTo($this), $this->compiled);
-
-            $lambdaRequired = function ($match) {
-
-                $regex = '\w+';
-
-                $this->paramsRequired[$match[1]] = isset($this->defaults[$match[1]]) ? $this->defaults[$match[1]] : \null;
-
-                if (isset($this->conditions[$match[1]])) {
-                    $regex = $this->conditions[$match[1]];
-                }
-
-                return '(?P<' . $match[1] . '>' . $regex . ')';
-
-            };
-
-            $this->compiled = preg_replace_callback('~{([^}]+)}~ius', $lambdaRequired->bindTo($this), $this->compiled);
-
-            $this->params = $this->paramsRequired + $this->paramsOptional;
+            $this->compiled = $compiled;
         }
 
         return $this->compiled;
@@ -146,7 +124,7 @@ class Route
 
     /**
      * @param string $compiled
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function setCompiled($compiled)
     {
@@ -165,35 +143,35 @@ class Route
     {
         $data += ($reset ? [] : $this->params) + $this->defaults;
 
-        $url = $this->pattern;
+        $url = '';
 
-        foreach ($data as $key => $value) {
-            $count = 0;
-            $url = preg_replace('#\{' . $key . '(:[^}]+)?\}#', $value, $url, -1, $count);
-            if ($count) {
-                unset($data[$key]);
-            }
-        }
+        $error = false;
 
-        $url = str_replace(']', '', $url);
-        $segs = array_reverse(explode('[', $url));
-
-        foreach ($segs as $n => $seg) {
-            if (strpos($seg, '{') !== false) {
-                if (isset($segs[$n - 1])) {
-                    throw new \InvalidArgumentException(sprintf(
-                        'Optional segments with unsubstituted parameters cannot '
-                        . 'contain segments with substituted parameters "%s"'
-                    ), $this->pattern);
+        if (preg_match_all('~(\[)?([^{}\[\]]*){([^}]+)}([^{}\[\]]*)(\])?~', $this->pattern, $matches)) {
+            foreach ($matches[3] as $k => $v) {
+                if (array_key_exists($v, $data)) {
+                    $matches[3][$k] = $data[$v];
+                    unset($data[$v]);
+                } else {
+                    if ($matches[1][$k] === '[') { // optional parameter
+                        unset($matches[1][$k]);
+                        unset($matches[2][$k]);
+                        unset($matches[3][$k]);
+                        unset($matches[4][$k]);
+                        unset($matches[5][$k]);
+                    } else {
+                        $error = true;
+                        $matches[3][$k] = '{' . $v . '}'; // required parameter
+                    }
                 }
-                unset($segs[$n]);
+                if (!empty($matches[2][$k])) $url .= $matches[2][$k];
+                if (!empty($matches[3][$k])) $url .= $matches[3][$k];
+                if (!empty($matches[4][$k])) $url .= $matches[4][$k];
             }
         }
 
-        $url = implode('', array_reverse($segs));
-
-        if (empty($url)) { // check something wrong
-            throw new \InvalidArgumentException(sprintf('Too few arguments? "%s"!', $this->pattern));
+        if ($error) { // check something wrong
+            throw new \InvalidArgumentException(sprintf('Too few arguments? "%s"!', $url), 500);
         }
 
         return $url;
@@ -220,7 +198,7 @@ class Route
 
     /**
      * @param array $conditions
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function setConditions(array $conditions)
     {
@@ -246,7 +224,7 @@ class Route
 
     /**
      * @param array $defaults
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function setDefaults(array $defaults)
     {
@@ -265,7 +243,7 @@ class Route
 
     /**
      * @param string $pattern
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function setPattern($pattern)
     {
@@ -296,7 +274,7 @@ class Route
 
     /**
      * @param array $params
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function setParams(array $params)
     {

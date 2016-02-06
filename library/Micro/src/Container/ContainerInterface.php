@@ -2,9 +2,9 @@
 
 namespace Micro\Container;
 
-interface ContainerInterface extends \ArrayAccess
+use Interop\Container\ContainerInterface as Interop;
+
+interface ContainerInterface extends Interop, \ArrayAccess
 {
-    public function get($service);
-    public function has($service);
-    public function set($service, $callback);
+    public function set($id, $callback);
 }

@@ -48,7 +48,11 @@ class Router implements ContainerAwareInterface
      */
     public function match(Request $request)
     {
-        $uri = static::URL_DELIMITER . ltrim($request->getUri()->getPath(), static::URL_DELIMITER);
+        $uri = $request->getUri()->getPath();
+
+        if (empty($uri) || $uri[0] !== static::URL_DELIMITER) {
+            $uri = static::URL_DELIMITER . $uri;
+        }
 
         if ($uri !== static::URL_DELIMITER) {
             $uri = rtrim($uri, static::URL_DELIMITER);
@@ -86,7 +90,13 @@ class Router implements ContainerAwareInterface
             throw new CoreException(sprintf('[' . __METHOD__ . '] Route "%s" already exists!', $name), 500);
         }
 
-        $pattern = static::URL_DELIMITER . trim($pattern, static::URL_DELIMITER);
+        if (empty($pattern) || $pattern[0] !== static::URL_DELIMITER) {
+            $pattern = static::URL_DELIMITER . $pattern;
+        }
+
+        if ($pattern !== static::URL_DELIMITER) {
+            $pattern = rtrim($pattern, static::URL_DELIMITER);
+        }
 
         $route = new Route($name, $pattern, $handler);
 
@@ -105,20 +115,21 @@ class Router implements ContainerAwareInterface
     /**
      * @param string $name
      * @param array $data
+     * @param boolean $reset
      * @param boolean $qsa
      * @throws \Exception
      * @return string
      */
-    public function assemble($name, array $data = [], $reset = \false, $qsa = \true)
+    public function assemble($name = \null, array $data = [], $reset = \false, $qsa = \true)
     {
-        static $request, $basePath;
+        static $request, $basePath, $queryParams;
 
         if ($name === \null && $this->currentRoute instanceof Route) {
             $name = $this->currentRoute->getName();
         }
 
         if (!isset($this->routes[$name])) {
-            throw new CoreException(sprintf('[' . __METHOD__ . '] Route "%s" not found!', $name), 500);
+            throw new CoreException(\sprintf('[' . __METHOD__ . '] Route "%s" not found!', $name), 500);
         }
 
         $route = $this->routes[$name];
@@ -133,29 +144,33 @@ class Router implements ContainerAwareInterface
             $url = $route->assemble($data, $reset);
         }
 
-        if ($request === null) {
+        if ($request === \null) {
+
             $request = $this->container->get('request');
-            if ($basePath === null) {
+
+            if ($basePath === \null) {
                 $basePath = $request->getUri()->getBasePath();
             }
-        }
 
-        if ($qsa === \true) {
-
-            $qs = $request->getQueryParams();
-
-            $data = array_filter($data);
-
-            if (!empty($data)) {
-                $qs = $data + $qs;
-            }
-
-            if (!empty($qs)) {
-                $url .= '?' . http_build_query($qs);
+            if ($queryParams === \null) {
+                $queryParams = $request->getQueryParams();
             }
         }
 
-        return $basePath . static::URL_DELIMITER . trim($url, static::URL_DELIMITER);
+        if ($qsa === \true && !empty($data)) {
+
+            $queryParams = $data + $queryParams;
+
+            if (!empty($queryParams)) {
+                $url .= '?' . \http_build_query($queryParams);
+            }
+        }
+
+        if ($url === self::URL_DELIMITER) {
+            return $basePath . $url;
+        }
+
+        return $basePath . rtrim($url, static::URL_DELIMITER);
     }
 
     /**
@@ -252,8 +267,6 @@ class Router implements ContainerAwareInterface
             }, 'admin');
 
             $route->setDefaults(['package' => 'app', 'controller' => 'index', 'action' => 'index', 'id' => \null]);
-
-            $route->setConditions(['package' => '[^\/]+', 'controller' => '[^\/]+', 'action' => '[^\/]+']);
         }
 
         if (!isset($this->routes['default'])) {
@@ -279,8 +292,6 @@ class Router implements ContainerAwareInterface
             }, 'default');
 
             $route->setDefaults(['package' => 'app', 'controller' => 'index', 'action' => 'index', 'id' => \null]);
-
-            $route->setConditions(['package' => '[^\/]+', 'controller' => '[^\/]+', 'action' => '[^\/]+']);
         }
 
         return $this;

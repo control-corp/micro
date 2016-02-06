@@ -432,7 +432,7 @@ class Application implements ExceptionHandlerInterface
         if ($this->container->has($package)) {
             $packageInstance = $this->container->get($package);
         } else {
-            $packageInstance = new $package($request, $response);
+            $packageInstance = new $package($request, $response, $this->container);
         }
 
         if ($packageInstance instanceof Controller) {
