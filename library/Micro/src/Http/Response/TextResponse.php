@@ -30,10 +30,16 @@ class TextResponse extends Response
     public function __construct($text = '', $status = 200, array $headers = [])
     {
         parent::__construct(
+            $this->createBody($text),
             $status,
-            ($headers + ['Content-Type' => ['text/plain; charset=utf-8']]),
-            $this->createBody($text)
+            []
         );
+
+        $headers = $headers + ['Content-Type' => 'text/plain; charset=utf-8'];
+
+        foreach ($headers as $name => $value) {
+            $this->withHeader($name, $value);
+        }
     }
 
     /**

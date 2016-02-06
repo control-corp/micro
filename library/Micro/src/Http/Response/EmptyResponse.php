@@ -17,17 +17,6 @@ class EmptyResponse extends Response
      */
     public function __construct($status = 204, array $headers = [])
     {
-        parent::__construct($status, $headers);
-    }
-
-    /**
-     * Create an empty response with the given headers.
-     *
-     * @param array $headers Headers for the response.
-     * @return EmptyResponse
-     */
-    public static function withHeaders(array $headers)
-    {
-        return new static(204, $headers);
+        parent::__construct(\null, $status, $headers);
     }
 }

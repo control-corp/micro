@@ -8,13 +8,13 @@ use Micro\Model\ModelInterface;
 trait DetectModelTrait
 {
     /**
-     * @var \Micro\Model\ModelInterface
+     * @var ModelInterface
      */
     protected $model;
 
     /**
      * @throws \Exception
-     * @return \Micro\Model\ModelInterface
+     * @return ModelInterface
      */
     public function getModel()
     {

@@ -40,7 +40,7 @@ class Request extends Message implements ServerRequestInterface
     /**
      * The request URI object
      *
-     * @var \Psr\Http\Message\UriInterface
+     * @var UriInterface
      */
     protected $uri;
 
@@ -125,10 +125,6 @@ class Request extends Message implements ServerRequestInterface
      */
     public static function createFromEnvironment()
     {
-        $method = $_SERVER['REQUEST_METHOD'];
-
-        $uri = Uri::createFromEnvironment();
-
         // headers
 
         $headers = [];
@@ -176,15 +172,17 @@ class Request extends Message implements ServerRequestInterface
             }
         }
 
-        $serverParams = $_SERVER;
+        $request = new static(
+            $_SERVER['REQUEST_METHOD'],
+            Uri::createFromEnvironment(),
+            $headers,
+            $cookies,
+            $_SERVER,
+            \null,
+            UploadedFile::createFromEnvironment()
+        );
 
-        $body = new RequestBody();
-
-        $uploadedFiles = UploadedFile::createFromEnvironment();
-
-        $request = new static($method, $uri, $headers, $cookies, $serverParams, $body, $uploadedFiles);
-
-        if ($method === 'POST' &&
+        if ($request->isPost() &&
             in_array($request->getMediaType(), ['application/x-www-form-urlencoded', 'multipart/form-data'])
         ) {
             // parsed body must be $_POST
@@ -213,9 +211,17 @@ class Request extends Message implements ServerRequestInterface
         array $headers,
         array $cookies,
         array $serverParams,
-        StreamInterface $body,
+        StreamInterface $body = \null,
         array $uploadedFiles = []
     ) {
+
+        if ($body === \null) {
+            $stream = fopen('php://temp', 'w+');
+            stream_copy_to_stream(fopen('php://input', 'r'), $stream);
+            rewind($stream);
+            $body = new Stream($stream);
+        }
+
         $this->originalMethod = $this->filterMethod($method);
         $this->uri = $uri;
         $this->headers = $headers;
@@ -278,18 +284,15 @@ class Request extends Message implements ServerRequestInterface
         if ($this->method === null) {
             $this->method = $this->originalMethod;
             $customMethod = $this->getHeaderLine('x-http-method-override');
-
             if ($customMethod) {
                 $this->method = $this->filterMethod($customMethod);
             } elseif ($this->originalMethod === 'POST') {
                 $body = $this->getParsedBody();
-
                 if (is_object($body) && property_exists($body, '_METHOD')) {
-                    $this->method = $this->filterMethod((string)$body->_METHOD);
+                    $this->method = $this->filterMethod((string) $body->_METHOD);
                 } elseif (is_array($body) && isset($body['_METHOD'])) {
-                    $this->method = $this->filterMethod((string)$body['_METHOD']);
+                    $this->method = $this->filterMethod((string) $body['_METHOD']);
                 }
-
                 if ($this->getBody()->eof()) {
                     $this->getBody()->rewind();
                 }
@@ -550,7 +553,7 @@ class Request extends Message implements ServerRequestInterface
      * This method MUST return a UriInterface instance.
      *
      * @link http://tools.ietf.org/html/rfc3986#section-4.3
-     * @return UriInterface Returns a UriInterface instance
+     * @return Uri Returns a UriInterface instance
      *     representing the URI of the request.
      */
     public function getUri()
@@ -584,7 +587,7 @@ class Request extends Message implements ServerRequestInterface
      * new UriInterface instance.
      *
      * @link http://tools.ietf.org/html/rfc3986#section-4.3
-     * @param UriInterface $uri New request URI to use.
+     * @param Uri $uri New request URI to use.
      * @param bool $preserveHost Preserve the original state of the Host header.
      * @return self
      */
@@ -968,7 +971,6 @@ class Request extends Message implements ServerRequestInterface
 
         if (isset($this->bodyParsers[$mediaType]) === true) {
             $parsed = $this->bodyParsers[$mediaType]($body);
-
             if (!is_null($parsed) && !is_object($parsed) && !is_array($parsed)) {
                 throw new RuntimeException(
                     'Request body media type parser return value must be an array, an object, or null'
@@ -1038,7 +1040,7 @@ class Request extends Message implements ServerRequestInterface
     }
 
     /**
-     * Fetch request parameter value from body or query string (in that order).
+     * Fetch request parameter value from attributes, body or query string (in that order).
      *
      * Note: This method is not part of the PSR-7 standard.
      *
@@ -1054,7 +1056,7 @@ class Request extends Message implements ServerRequestInterface
         $attributes = $this->getAttributes();
 
         $result = $default;
-        if (is_array($attributes) && isset($attributes[$key])) {
+        if (isset($attributes[$key])) {
             $result = $attributes[$key];
         } elseif (is_array($postParams) && isset($postParams[$key])) {
             $result = $postParams[$key];
@@ -1065,6 +1067,24 @@ class Request extends Message implements ServerRequestInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Fetch assocative array of attributes, body and query string parameters.
+     *
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @return array
+     */
+    public function getParams()
+    {
+        $params = $this->getAttributes() + $this->getQueryParams();
+        $postParams = $this->getParsedBody();
+        if ($postParams) {
+            $params = array_merge($params, (array) $postParams);
+        }
+
+        return $params;
     }
 
     /**
@@ -1112,23 +1132,9 @@ class Request extends Message implements ServerRequestInterface
     }
 
     /**
-     * Fetch assocative array of body and query string parameters.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @return array
+     * @param string $key
+     * @return string
      */
-    public function getParams()
-    {
-        $params = $this->getQueryParams();
-        $postParams = $this->getParsedBody();
-        if ($postParams) {
-            $params = array_merge($params, (array)$postParams);
-        }
-
-        return $params;
-    }
-
     public static function normalizeHeaderKey($key)
     {
         $key = strtr(strtolower($key), '_', '-');

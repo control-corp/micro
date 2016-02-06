@@ -3,6 +3,7 @@
 namespace Micro\Application\Controller;
 
 use Micro\Application\Controller;
+use Micro\Application\View;
 use Micro\Http\Response\RedirectResponse;
 use Micro\Form\Form;
 use Micro\Grid;
@@ -18,7 +19,7 @@ class Crud extends Controller
     protected $ipp = 10;
 
     /**
-     * @return \Micro\Http\Response\RedirectResponse|\Micro\Application\View
+     * @return RedirectResponse|View
      */
     public function indexAction()
     {

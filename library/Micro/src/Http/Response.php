@@ -108,15 +108,15 @@ class Response extends Message implements ResponseInterface
     /**
      * Create new HTTP response.
      *
-     * @param int                   $status  The response status code.
-     * @param HeadersInterface|null $headers The response headers.
      * @param StreamInterface|null  $body    The response body.
+     * @param int                   $status  The response status code.
+     * @param array|null            $headers The response headers.
      */
-    public function __construct($status = 200, array $headers = null, StreamInterface $body = null)
+    public function __construct(StreamInterface $body = null, $status = 200, array $headers = null)
     {
+        $this->body = $body ? $body : new Stream(fopen('php://temp', 'r+'));
         $this->status = $this->filterStatus($status);
         $this->headers = $headers ? $headers : [];
-        $this->body = $body ? $body : new Stream(fopen('php://temp', 'r+'));
     }
 
     /**
@@ -248,55 +248,6 @@ class Response extends Message implements ResponseInterface
         $this->getBody()->write($data);
 
         return $this;
-    }
-
-    /*******************************************************************************
-     * Response Helpers
-     ******************************************************************************/
-
-    /**
-     * Redirect.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * This method prepares the response object to return an HTTP Redirect
-     * response to the client.
-     *
-     * @param  string|UriInterface $url    The redirect destination.
-     * @param  int                 $status The redirect HTTP status code.
-     * @return self
-     */
-    public function withRedirect($url, $status = 302)
-    {
-        return $this->withStatus($status)->withHeader('Location', (string)$url);
-    }
-
-    /**
-     * Json.
-     *
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * This method prepares the response object to return an HTTP Json
-     * response to the client.
-     *
-     * @param  mixed  $data   The data
-     * @param  int    $status The HTTP status code.
-     * @param  int    $encodingOptions Json encoding options
-     * @throws \RuntimeException
-     * @return self
-     */
-    public function withJson($data, $status = 200, $encodingOptions = 0)
-    {
-        $body = $this->getBody();
-        $body->rewind();
-        $body->write($json = json_encode($data, $encodingOptions));
-
-        // Ensure that the json encoding passed successfully
-        if ($json === false) {
-            throw new \RuntimeException(json_last_error_msg(), json_last_error());
-        }
-
-        return $this->withStatus($status)->withHeader('Content-Type', 'application/json;charset=utf-8');
     }
 
     /**

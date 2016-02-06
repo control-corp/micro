@@ -24,7 +24,7 @@ abstract class Message implements MessageInterface
      *
      * @var string
      */
-    protected $protocolVersion = '1.0';
+    protected $protocolVersion = '1.1';
 
     /**
      * Headers
@@ -178,11 +178,15 @@ abstract class Message implements MessageInterface
      */
     public function withHeader($name, $value)
     {
+        if (!is_array($value)) {
+            $value = [$value];
+        }
+
         if (!isset($this->headers[$name])) {
             $this->headers[$name] = [];
         }
 
-        $this->headers[$name][] = $value;
+        $this->headers[$name] = array_merge($this->headers[$name], $value);
 
         return $this;
     }
@@ -214,7 +218,9 @@ abstract class Message implements MessageInterface
      */
     public function withoutHeader($name)
     {
-        unset($this->headers[$name]);
+        if (isset($this->headers[$name])) {
+            unset($this->headers[$name]);
+        }
 
         return $this;
     }

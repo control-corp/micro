@@ -154,25 +154,27 @@ class Uri implements UriInterface
      *
      * @return self
      */
-    public static function createFromEnvironment()
+    public static function createFromEnvironment(array $env = \null)
     {
+        $env = $env ?: $_SERVER;
+
         // Scheme
-        $isSecure = isset($_SERVER['HTTPS']) ? $_SERVER['HTTPS'] : '';
+        $isSecure = isset($env['HTTPS']) ? $env['HTTPS'] : '';
         $scheme = (empty($isSecure) || $isSecure === 'off') ? 'http' : 'https';
 
         // Authority: Username and password
-        $username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-        $password = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+        $username = isset($env['PHP_AUTH_USER']) ? $env['PHP_AUTH_USER'] : '';
+        $password = isset($env['PHP_AUTH_PW']) ? $env['PHP_AUTH_PW'] : '';
 
         // Authority: Host
-        if (isset($_SERVER['HTTP_HOST'])) {
-            $host = $_SERVER['HTTP_HOST'];
+        if (isset($env['HTTP_HOST'])) {
+            $host = $env['HTTP_HOST'];
         } else {
-            $host = isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : '';
+            $host = isset($env['SERVER_NAME']) ? $env['SERVER_NAME'] : '';
         }
 
         // Authority: Port
-        $port = (int) (isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : 80);
+        $port = (int) (isset($env['SERVER_PORT']) ? $env['SERVER_PORT'] : 80);
         if (preg_match('/^(\[[a-fA-F0-9:.]+\])(:\d+)?\z/', $host, $matches)) {
             $host = $matches[1];
             if ($matches[2]) {
@@ -187,12 +189,12 @@ class Uri implements UriInterface
         }
 
         // Path
-        $requestScriptName = parse_url((isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : ''), PHP_URL_PATH);
+        $requestScriptName = parse_url((isset($env['SCRIPT_NAME']) ? $env['SCRIPT_NAME'] : ''), PHP_URL_PATH);
         $requestScriptDir = dirname($requestScriptName);
 
         // parse_url() requires a full URL. As we don't extract the domain name or scheme,
         // we use a stand-in.
-        $requestUri = parse_url('http://example.com' . (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''), PHP_URL_PATH);
+        $requestUri = parse_url('http://example.com' . (isset($env['REQUEST_URI']) ? $env['REQUEST_URI'] : ''), PHP_URL_PATH);
 
         $basePath = '';
         $virtualPath = $requestUri;
@@ -207,7 +209,7 @@ class Uri implements UriInterface
         }
 
         // Query string
-        $queryString = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
+        $queryString = isset($env['QUERY_STRING']) ? $env['QUERY_STRING'] : '';
 
         // Fragment
         $fragment = '';
@@ -220,10 +222,6 @@ class Uri implements UriInterface
 
         return $uri;
     }
-
-    /********************************************************************************
-     * Scheme
-     *******************************************************************************/
 
     /**
      * Retrieve the scheme component of the URI.
@@ -296,10 +294,6 @@ class Uri implements UriInterface
 
         return $scheme;
     }
-
-    /********************************************************************************
-     * Authority
-     *******************************************************************************/
 
     /**
      * Retrieve the authority component of the URI.
@@ -477,10 +471,6 @@ class Uri implements UriInterface
         throw new InvalidArgumentException('Uri port must be null or an integer between 1 and 65535 (inclusive)');
     }
 
-    /********************************************************************************
-     * Path
-     *******************************************************************************/
-
     /**
      * Retrieve the path component of the URI.
      *
@@ -612,10 +602,6 @@ class Uri implements UriInterface
         );
     }
 
-    /********************************************************************************
-     * Query
-     *******************************************************************************/
-
     /**
      * Retrieve the query string of the URI.
      *
@@ -684,10 +670,6 @@ class Uri implements UriInterface
         );
     }
 
-    /********************************************************************************
-     * Fragment
-     *******************************************************************************/
-
     /**
      * Retrieve the fragment component of the URI.
      *
@@ -733,10 +715,6 @@ class Uri implements UriInterface
 
         return $this;
     }
-
-    /********************************************************************************
-     * Helpers
-     *******************************************************************************/
 
     /**
      * Return the string representation as a URI reference.

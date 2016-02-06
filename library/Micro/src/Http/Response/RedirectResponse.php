@@ -33,6 +33,12 @@ class RedirectResponse extends Response
             ));
         }
 
-        parent::__construct($status, (['Location' => [(string) $uri]] + $headers));
+        parent::__construct(\null, $status, []);
+
+        $headers = ['Location' => (string) $uri] + $headers;
+
+        foreach ($headers as $name => $value) {
+            $this->withHeader($name, $value);
+        }
     }
 }

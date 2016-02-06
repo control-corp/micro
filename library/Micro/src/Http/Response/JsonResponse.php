@@ -50,10 +50,18 @@ class JsonResponse extends Response
         array $headers = [],
         $encodingOptions = self::DEFAULT_JSON_FLAGS
     ) {
+
         $body = new Stream(fopen('php://temp', 'r+'));
         $body->write($this->jsonEncode($data, $encodingOptions));
         $body->rewind();
-        parent::__construct($status, ($headers + ['Content-Type' => ['application/json']]), $body);
+
+        parent::__construct($body, $status, []);
+
+        $headers = $headers + ['Content-Type' => 'application/json'];
+
+        foreach ($headers as $name => $value) {
+            $this->withHeader($name, $value);
+        }
     }
 
     /**

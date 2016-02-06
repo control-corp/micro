@@ -30,10 +30,16 @@ class HtmlResponse extends Response
     public function __construct($html = '', $status = 200, array $headers = [])
     {
         parent::__construct(
+            $this->createBody($html),
             $status,
-            ($headers + ['Content-Type' => ['text/html; charset=utf-8']]),
-            $this->createBody($html)
+            []
         );
+
+        $headers = $headers + ['Content-Type' => 'text/html; charset=utf-8'];
+
+        foreach ($headers as $name => $value) {
+            $this->withHeader($name, $value);
+        }
     }
 
     /**
