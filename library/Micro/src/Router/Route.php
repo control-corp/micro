@@ -96,9 +96,24 @@ class Route
 
             $compiled = '';
 
-            if (preg_match_all('~(\[)?([^{}\[\]]*){([^}]+)}([^{}\[\]]*)(\])?~', $this->pattern, $matches)) {
+            $pattern = $this->pattern;
 
-                foreach ($matches[3] as $k => $param) {
+            if (preg_match_all('
+            ~
+                ([^\[\{]+)|
+                (\[)?
+                ([^{}\[\]]*)?
+                {([^}]+)}
+                ([^{}\[\]]*)?
+                (\])?
+            ~xius', $pattern, $matches)) {
+
+                foreach ($matches[4] as $k => $param) {
+
+                    if (empty($param)) {
+                        $compiled .= $matches[1][$k];
+                        continue;
+                    }
 
                     $regex = '[^/]+';
 
@@ -106,10 +121,10 @@ class Route
                         $regex = $this->conditions[$param];
                     }
 
-                    if ($matches[1][$k] === '[') {
-                        $compiled .= '(' . preg_quote($matches[2][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[4][$k]) . ')?';
+                    if ($matches[2][$k] === '[') {
+                        $compiled .= '(' . preg_quote($matches[3][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[5][$k]) . ')?';
                     } else {
-                        $compiled .= preg_quote($matches[2][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[4][$k]);
+                        $compiled .= preg_quote($matches[3][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[5][$k]);
                     }
 
                     $this->params[$param] = isset($this->defaults[$param]) ? $this->defaults[$param] : \null;
@@ -147,26 +162,30 @@ class Route
 
         $error = false;
 
-        if (preg_match_all('~(\[)?([^{}\[\]]*){([^}]+)}([^{}\[\]]*)(\])?~', $this->pattern, $matches)) {
-            foreach ($matches[3] as $k => $v) {
+        if (preg_match_all('~([^\[\{]+)|(\[)?([^{}\[\]]*){([^}]+)}([^{}\[\]]*)(\])?~', $this->pattern, $matches)) {
+            foreach ($matches[4] as $k => $v) {
+                if (empty($v)) {
+                    $url .= $matches[1][$k];
+                    unset($data[$v]);
+                    continue;
+                }
                 if (array_key_exists($v, $data)) {
-                    $matches[3][$k] = $data[$v];
+                    $matches[4][$k] = $data[$v];
                     unset($data[$v]);
                 } else {
-                    if ($matches[1][$k] === '[') { // optional parameter
-                        unset($matches[1][$k]);
+                    if ($matches[2][$k] === '[') { // optional parameter
                         unset($matches[2][$k]);
                         unset($matches[3][$k]);
                         unset($matches[4][$k]);
                         unset($matches[5][$k]);
                     } else {
                         $error = true;
-                        $matches[3][$k] = '{' . $v . '}'; // required parameter
+                        $matches[4][$k] = '{' . $v . '}'; // required parameter
                     }
                 }
-                if (!empty($matches[2][$k])) $url .= $matches[2][$k];
                 if (!empty($matches[3][$k])) $url .= $matches[3][$k];
                 if (!empty($matches[4][$k])) $url .= $matches[4][$k];
+                if (!empty($matches[5][$k])) $url .= $matches[5][$k];
             }
         }
 

@@ -63,7 +63,7 @@ class Router implements ContainerAwareInterface
         }
 
         foreach ($this->routes as $route) {
-            if ($route instanceof Route && $route->match($uri)) {
+            if ($route instanceof Route && !isset($this->routesStatic[$route->getPattern()]) && $route->match($uri)) {
                 return $this->currentRoute = $route;
             }
         }
