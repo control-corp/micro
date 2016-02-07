@@ -27,9 +27,6 @@ if (isset($config['packages'])) {
 }
 
 /* $container = new App\Container\Zend([
-    'factories' => [
-        App\Factory\Test::class => 'App\Factory\Test',
-    ],
     'services' => [
         'config' => new Config($config),
     ],
