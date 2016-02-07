@@ -44,20 +44,36 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
     /**
      * @var Application is booted
+     * @var boolean
      */
     private $booted = \false;
+
+    /**
+     * @var boolean
+     */
+    private $useMiddleware = \true;
+
+    /**
+     * @var boolean
+     */
+    private $useEvent = \true;
 
     /**
      * @param ContainerInterface $container
      * @param string $name
      */
-    public function __construct(ContainerInterface $container, $name = 'app')
+    public function __construct(ContainerInterface $container, $useMiddleware = \true, $useEvent = \true)
     {
         $this->container = $container;
 
-        $this->container->set($name, $this);
+        $this->container->set('app', $this);
 
-        $this->registerDefaultServices();
+        $this->useMiddleware = $useMiddleware;
+        $this->useEvent = $useEvent;
+
+        $this->registerMinimumServices();
+
+        $this->registerExtraServices();
     }
 
     /**
@@ -70,13 +86,13 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
             $this->boot();
 
-            if (($eventResponse = $this->container->get('event')->trigger('application.start')) instanceof ServerRequestInterface) {
+            if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('application.start')) instanceof ServerRequestInterface) {
                 $response = $eventResponse;
             } else {
                 $response = $this->dispatch();
             }
 
-            if (($eventResponse = $this->container->get('event')->trigger('application.end', ['response' => $response])) instanceof ResponseInterface) {
+            if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('application.end', ['response' => $response])) instanceof ResponseInterface) {
                 $response = $eventResponse;
             }
 
@@ -118,7 +134,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     /**
      * @return Application
      */
-    public function registerDefaultServices()
+    public function registerMinimumServices()
     {
         if ($this->container->has('request') === \false) {
             $this->container->set('request', function () {
@@ -152,10 +168,22 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $this->container->set('exception.handler', $this);
         }
 
-        if ($this->container->has('exception.handler.fallback') === \false) {
-            $this->container->set('exception.handler.fallback', $this);
+        if ($this->container->has('logger') === \false) {
+            $this->container->set('logger', ($logger = new FileLog()));
+        } else {
+            $logger = $this->container->get('logger');
         }
 
+        ErrorHandler::register($logger);
+
+        CoreException::setLogger($logger);
+    }
+
+    /**
+     * @return Application
+     */
+    public function registerExtraServices()
+    {
         $config = $this->container->get('config');
 
         if ($this->container->has('acl') === \false) {
@@ -214,29 +242,11 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             });
         }
 
-        /**
-         * Register default logger
-         */
-        if ($this->container->has('logger') === \false) {
-            $this->container->set('logger', function () {
-                return new FileLog();
-            });
-        }
-
-        /**
-         * Register session config
-         */
         $sessionConfig = $config->get('session', []);
 
         if (!empty($sessionConfig)) {
             Session::register($sessionConfig);
         }
-
-        $logger = $this->container->get('logger');
-
-        ErrorHandler::register($logger);
-
-        CoreException::setLogger($logger);
 
         return $this;
     }
@@ -264,11 +274,33 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         $response = $response ?: $this->container->get('response');
 
         try {
-            $response = $this->callMiddlewareStack($request, $response);
+
+            if ($this->useMiddleware === \true) {
+                return $this->callMiddlewareStack($request, $response);
+            } else {
+                return $this($request, $response);
+            }
+
         } catch (\Exception $e) {
+
             try {
-                $response = $this->handleException($e, $request, $response);
+
+                $exceptionHandler = $this->container->get('exception.handler');
+
+                if (!$exceptionHandler instanceof ExceptionHandlerInterface) {
+                    throw $e;
+                }
+
+                if (($exceptionResponse = $exceptionHandler->handleException($e, $request, $response)) instanceof ResponseInterface) {
+                    return $exceptionResponse;
+                }
+
+                if (env('development')) {
+                    $response->getBody()->write((string) $exceptionResponse);
+                }
+
             } catch (\Exception $e) {
+
                 if (env('development')) {
                     $response->getBody()->write($e->getMessage());
                 }
@@ -300,11 +332,15 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $request->withAttribute($k, $v);
         }
 
-        if (($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof ResponseInterface) {
+        if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof ResponseInterface) {
             return $eventResponse;
         }
 
-        return $route->run($request, $response);
+        if ($this->useMiddleware === \true) {
+            return $route->run($request, $response);
+        } else {
+            return $route($request, $response);
+        }
     }
 
     /**
@@ -545,7 +581,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
             $packageResponse->injectPaths((array) package_path($parts[0], 'Resources/views'));
 
-            if (($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface) {
+            if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface) {
                 return $eventResponse;
             }
 

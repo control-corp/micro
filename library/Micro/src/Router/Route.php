@@ -64,6 +64,11 @@ class Route implements ContainerAwareInterface
     protected $middleware = [];
 
     /**
+     * @var boolean
+     */
+    protected $middlewareAreAdded = \false;
+
+    /**
      * @param string $name
      * @param string $pattern
      * @param \Closure|string $handler
@@ -368,8 +373,11 @@ class Route implements ContainerAwareInterface
      */
     public function run(ServerRequestInterface $request, ResponseInterface $response)
     {
-        foreach ($this->middleware as $middleware) {
-            $this->addMiddleware($middleware);
+        if ($this->middlewareAreAdded === \false) {
+            foreach ($this->middleware as $middleware) {
+                $this->addMiddleware($middleware);
+            }
+            $this->middlewareAreAdded = \true;
         }
 
         return $this->callMiddlewareStack($request, $response);
