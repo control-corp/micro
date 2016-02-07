@@ -22,7 +22,11 @@ class Zend extends ServiceManager implements ContainerInterface
 
     public function set($id, $callback)
     {
-        $this->setFactory($id, $callback);
+        if (is_object($callback) && !$callback instanceof \Closure) {
+            $this->setService($id, $callback);
+        } else {
+            $this->setFactory($id, $callback);
+        }
 
         return $this;
     }
