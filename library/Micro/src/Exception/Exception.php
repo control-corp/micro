@@ -2,27 +2,34 @@
 
 namespace Micro\Exception;
 
-use Micro\Log\Log;
-use Micro\Log\LogInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 class Exception extends \Exception
 {
-    public function __construct($message, $code = 500, $previous = null)
-	{
+    /**
+     * @var LoggerInterface
+     */
+    private static $logger;
+
+    public function __construct($message = \null, $code = \null, $previous = \null)
+    {
         parent::__construct($message, $code, $previous);
 
-        static::exceptionHandler($this);
+        if (static::$logger !== \null) {
+
+            static::$logger->log(LogLevel::ALERT, $message, array(
+                'code'    => $this->getCode(),
+                'message' => $this->getMessage(),
+                'file'    => $this->getFile(),
+                'line'    => $this->getLine(),
+                'type'    => 'exceptions'
+            ));
+        }
     }
 
-	public static function register()
-	{
-	    set_exception_handler('Micro\Exception\Exception::exceptionHandler');
-	}
-
-	public static function exceptionHandler(\Exception $e)
-	{
-	    if (($logger = Log::getLogger()) instanceof LogInterface) {
-	        $logger->write('(' . (int) $e->getCode() . ') ' . \strip_tags($e->getMessage()) . ' - ' . $_SERVER['REMOTE_ADDR'] . ' - ' . $_SERVER['REQUEST_URI'], 'exceptions');
-	    }
-	}
+    public static function setLogger(LoggerInterface $logger)
+    {
+        static::$logger = $logger;
+    }
 }

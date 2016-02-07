@@ -17,7 +17,7 @@ use Micro\Cache\Cache;
 use Micro\Translator\Translator;
 use Micro\Session\Session;
 use Micro\Application\Resolver\ResolverAwareInterface;
-use Micro\Log\Log as CoreLog;
+use Micro\Log\ErrorHandler;
 use Micro\Log\File as FileLog;
 
 class Application implements ExceptionHandlerInterface
@@ -197,11 +197,11 @@ class Application implements ExceptionHandlerInterface
             Session::register($sessionConfig);
         }
 
-        CoreLog::setLogger($this->container->get('logger'));
+        $logger = $this->container->get('logger');
 
-        CoreLog::register();
+        ErrorHandler::register($logger);
 
-        CoreException::register();
+        CoreException::setLogger($logger);
 
         return $this;
     }
