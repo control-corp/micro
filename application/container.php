@@ -26,7 +26,20 @@ if (isset($config['packages'])) {
     MicroLoader::addPath($config['packages']);
 }
 
-$container = new Container(true);
+/* $container = new App\Container\Zend([
+    'factories' => [
+        App\Factory\Test::class => 'App\Factory\Test',
+    ],
+    'services' => [
+        'config' => new Config($config),
+    ],
+]);
+
+var_dump($container->get(App\Factory\Test::class));
+
+return $container; */
+
+$container = new Container();
 
 $container->set('config', new Config($config));
 

@@ -19,6 +19,7 @@ use Micro\Session\Session;
 use Micro\Application\Resolver\ResolverAwareInterface;
 use Micro\Log\ErrorHandler;
 use Micro\Log\File as FileLog;
+use Micro\Container\ContainerInterface;
 
 class Application implements ExceptionHandlerInterface
 {
@@ -43,10 +44,10 @@ class Application implements ExceptionHandlerInterface
     private $booted = \false;
 
     /**
-     * @param Container $container
+     * @param ContainerInterface $container
      * @param string $name
      */
-    public function __construct(Container $container, $name = 'app')
+    public function __construct(ContainerInterface $container, $name = 'app')
     {
         $this->container = $container;
 
@@ -85,7 +86,7 @@ class Application implements ExceptionHandlerInterface
     }
 
     /**
-     * @return \Micro\Application\Application
+     * @return Application
      */
     public function registerDefaultServices()
     {

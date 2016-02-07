@@ -24,32 +24,11 @@ class Container implements ContainerInterface
      */
     protected $aliases = [];
 
-    /**
-     * @var Container
-     */
-    protected static $instance;
-
-    public function __construct($useAsDefault = \false)
+    public function __construct($useAsDefault = \true)
     {
-        if ($useAsDefault) {
-            static::setInstance($this);
+        if ($useAsDefault === \true) {
+            SharedContainer::setInstance($this);
         }
-    }
-
-    /**
-     * @param Container $instance
-     */
-    public static function setInstance(Container $instance)
-    {
-        static::$instance = $instance;
-    }
-
-    /**
-     * @return Container
-     */
-    public static function getInstance()
-    {
-        return static::$instance;
     }
 
     /**
@@ -125,7 +104,7 @@ class Container implements ContainerInterface
      * @param string $offset
      * @param callable $callback
      * @throws \InvalidArgumentException
-     * @return unknown
+     * @return mixed
      */
     public function extend($offset, $callback)
     {
@@ -149,7 +128,7 @@ class Container implements ContainerInterface
     /**
      * @param string $alias
      * @param string $service
-     * @return \Micro\Container\Container
+     * @return Container
      */
     public function alias($alias, $service)
     {

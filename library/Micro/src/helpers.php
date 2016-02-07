@@ -1,6 +1,5 @@
 <?php
 
-use Micro\Container\Container;
 use Micro\Application\View;
 use Micro\Exception\Exception as CoreException;
 use Micro\Http\Response\JsonResponse;
@@ -9,11 +8,16 @@ use Micro\Paginator\Paginator;
 use Micro\Acl\RoleInterface;
 use Micro\Auth\Auth;
 use Micro\Helper\Flash;
+use Micro\Container\SharedContainer;
 
 if (!function_exists('app')) {
     function app($service = \null)
     {
-        $container = Container::getInstance();
+        $container = SharedContainer::getInstance();
+
+        if ($container === \null) {
+            throw new \RuntimeException('There is no container in SharedContainer', 500);
+        }
 
         if ($service !== \null) {
             return $container->get($service);

@@ -2,7 +2,7 @@
 
 return [
     'router' => [
-        'default_routes' => false,
+        'default_routes' => true,
     ],
     'acl' => [
         'enabled' => false
