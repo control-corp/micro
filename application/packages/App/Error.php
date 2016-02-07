@@ -3,20 +3,21 @@
 namespace App;
 
 use Micro\Http\Response\JsonResponse;
-use Micro\Application\Resolver\ResolverAwareInterface;
-use Micro\Application\Resolver\ResolverAwareTrait;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
 
-class Error implements ResolverAwareInterface, ContainerAwareInterface
+class Error implements ContainerAwareInterface
 {
-    use ResolverAwareTrait, ContainerAwareTrait;
+    use ContainerAwareTrait;
 
     const ERROR = 'Error !';
 
     public function index()
     {
-        $exception = $this->request->getParam('exception');
+        $request = $this->container->get('request');
+        $response = $this->container->get('response');
+
+        $exception = $request->getParam('exception');
 
         if (!$exception instanceof \Exception) {
             return ['exception' => $exception, 'message' => static::ERROR];
@@ -25,7 +26,7 @@ class Error implements ResolverAwareInterface, ContainerAwareInterface
         $code = $exception->getCode() ?: 404;
         $message = (env('development') || $code === 403 ? $exception->getMessage() : static::ERROR);
 
-        if ($this->request->isAjax()) {
+        if ($request->isAjax()) {
             return new JsonResponse([
                 'error' => [
                     'message' => $exception->getMessage(),
@@ -37,8 +38,8 @@ class Error implements ResolverAwareInterface, ContainerAwareInterface
             ], $code);
         }
 
-        $this->response->withStatus($code);
+        $response->withStatus($code);
 
-        return $this->response->write('ERROR: ' . $exception->getMessage())->withStatus($code);
+        return $response->write('ERROR: ' . $exception->getMessage())->withStatus($code);
     }
 }

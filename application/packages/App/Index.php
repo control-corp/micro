@@ -2,17 +2,16 @@
 
 namespace App;
 
-use Micro\Application\Resolver\ResolverAwareInterface;
-use Micro\Application\Resolver\ResolverAwareTrait;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
+use Micro\Application\View;
 
-class Index implements ResolverAwareInterface, ContainerAwareInterface
+class Index implements ContainerAwareInterface
 {
-    use ResolverAwareTrait, ContainerAwareTrait;
+    use ContainerAwareTrait;
 
     public function index()
     {
-        return 'hello';
+        return new View('index');
     }
 }

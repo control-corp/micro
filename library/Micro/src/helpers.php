@@ -278,14 +278,17 @@ if (!function_exists('forward')) {
         $request = clone app('request');
         $request->setParams($params);
 
-        return app()->resolve($package, $request, clone app('response'), $subRequest);
+        return app('resolver')->resolve($package, $request, clone app('response'), $subRequest);
     }
 }
 
 if (!function_exists('widget')) {
     function widget($package, array $params = [])
     {
-		return forward($package, $params, \true)->getBody();
+        $request = clone app('request');
+        $request->setParams($params);
+
+        return app('resolver')->resolve($package, $request, clone app('response'), \true)->getBody();
     }
 }
 

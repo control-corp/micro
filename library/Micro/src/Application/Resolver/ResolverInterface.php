@@ -5,15 +5,13 @@ namespace Micro\Application\Resolver;
 use Micro\Http\Request;
 use Micro\Http\Response;
 
-interface ResolverAwareInterface
+interface ResolverInterface
 {
     /**
+     * @param string $package
      * @param Request $request
-     */
-    public function setRequest(Request $request);
-
-    /**
      * @param Response $response
+     * @param bool $subRequest
      */
-    public function setResponse(Response $response);
+    public function resolve($package, Request $request, Response $response, $subRequest);
 }

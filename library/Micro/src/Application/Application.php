@@ -16,12 +16,12 @@ use Micro\Database\Table\TableAbstract;
 use Micro\Cache\Cache;
 use Micro\Translator\Translator;
 use Micro\Session\Session;
-use Micro\Application\Resolver\ResolverAwareInterface;
 use Micro\Log\ErrorHandler;
 use Micro\Log\File as FileLog;
 use Micro\Container\ContainerInterface;
+use Micro\Application\Resolver\ResolverInterface;
 
-class Application implements ExceptionHandlerInterface
+class Application implements ExceptionHandlerInterface, ResolverInterface
 {
     /**
      * @var Container
@@ -66,7 +66,19 @@ class Application implements ExceptionHandlerInterface
 
             $this->boot();
 
-            $response = $this->dispatch();
+            $em = $this->container->get('event');
+            $request = $this->container->get('request');
+            $response = $this->container->get('response');
+
+            if (($eventResponse = $em->trigger('application.start', ['request' => $request])) instanceof Response) {
+                $response = $eventResponse;
+            } else {
+                $response = $this->dispatch($request, $response);
+            }
+
+            if (($eventResponse = $em->trigger('application.end', ['response' => $response])) instanceof Response) {
+                $response = $eventResponse;
+            }
 
             if (env('development')) {
                 foreach ($this->exceptions as $exception) {
@@ -112,6 +124,10 @@ class Application implements ExceptionHandlerInterface
             $this->container->set('router', function () {
                 return new Router();
             });
+        }
+
+        if ($this->container->has('resolver') === \false) {
+            $this->container->set('resolver', $this);
         }
 
         if ($this->container->has('exception.handler') === \false) {
@@ -244,16 +260,16 @@ class Application implements ExceptionHandlerInterface
                 $route->getParams()
             );
 
-            $routeHandler = $route->getHandler();
-
-            if (is_string($routeHandler) && strpos($routeHandler, '@') !== \false) { // package format
-                $routeHandler = $this->resolve($routeHandler, $request, $response);
+            if (($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof Response) {
+                return $eventResponse;
             }
 
-            if ($routeHandler instanceof Response) {
-                $response = $routeHandler;
+            $resolver = $this->container->get('resolver');
+
+            if ($resolver instanceof ResolverInterface) {
+                $response = $resolver->resolve($route->getHandler(), $request, $response);
             } else {
-                $response->write((string) $routeHandler);
+                throw new CoreException('Resolver is not instanceof ResolverInterface', 500);
             }
 
         } catch (\Exception $e) {
@@ -379,7 +395,13 @@ class Application implements ExceptionHandlerInterface
 
         $request->withAttribute('exception', $e);
 
-        return $this->resolve($package, $request, $response);
+        $resolver = $this->container->get('resolver');
+
+        if ($resolver instanceof ResolverInterface) {
+            return $resolver->resolve($package, $request, $response);
+        }
+
+        throw new CoreException('Resolver is not instanceof ResolverInterface', 500);
     }
 
     /**
@@ -403,7 +425,7 @@ class Application implements ExceptionHandlerInterface
                 if (!$instance instanceof Package) {
                     throw new CoreException(\sprintf('%s must be instance of Micro\Application\Package', $packageInstance), 500);
                 }
-                $instance->setContainer($this)->boot();
+                $instance->setContainer($this->container)->boot();
                 $this->packages[$package] = $instance;
             }
         }
@@ -422,7 +444,16 @@ class Application implements ExceptionHandlerInterface
     public function resolve($package, Request $request, Response $response, $subRequest = \false)
     {
         if (!is_string($package) || strpos($package, '@') === \false) {
-            throw new CoreException('Package must be in [Package\Handler@action] format', 500);
+
+            if ($package instanceof \Closure) {
+                $package = $package->__invoke($this->container);
+            }
+
+            if ($package instanceof Response) {
+                return $package;
+            } else {
+                return $response->write((string) $package);
+            }
         }
 
         list($package, $action) = explode('@', $package);
@@ -445,6 +476,9 @@ class Application implements ExceptionHandlerInterface
             $packageInstance = $this->container->get($package);
         } else {
             $packageInstance = new $package($request, $response, $this->container);
+            if ($packageInstance instanceof ContainerAwareInterface) {
+                $packageInstance->setContainer($this->container);
+            }
         }
 
         if ($packageInstance instanceof Controller) {
@@ -455,15 +489,6 @@ class Application implements ExceptionHandlerInterface
 
         if (!method_exists($packageInstance, $action)) {
             throw new CoreException('Method "' . $action . '" not found in "' . $package . '"', 404);
-        }
-
-        if ($packageInstance instanceof ContainerAwareInterface) {
-            $packageInstance->setContainer($this->container);
-        }
-
-        if ($packageInstance instanceof ResolverAwareInterface) {
-            $packageInstance->setRequest($request)
-                            ->setResponse($response);
         }
 
         $scope = '';
