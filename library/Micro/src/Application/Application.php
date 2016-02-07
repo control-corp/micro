@@ -262,7 +262,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
                 $response = $this->handleException($e, $request, $response);
             } catch (\Exception $e) {
                 if (env('development')) {
-                    $response->write($e->getMessage());
+                    $response->getBody()->write($e->getMessage());
                 }
             }
         }
