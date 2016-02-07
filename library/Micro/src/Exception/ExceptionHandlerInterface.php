@@ -2,10 +2,10 @@
 
 namespace Micro\Exception;
 
-use Micro\Http\Request;
-use Micro\Http\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 interface ExceptionHandlerInterface
 {
-    public function handleException(\Exception $e, Request $request, Response $response);
+    public function handleException(\Exception $e, ServerRequestInterface $request, ResponseInterface $response);
 }

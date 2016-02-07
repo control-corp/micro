@@ -3,8 +3,6 @@
 namespace Micro\Application;
 
 use Micro\Exception\Exception as CoreException;
-use Micro\Http\Request;
-use Micro\Http\Response;
 use Micro\Router\Router;
 use Micro\Event;
 use Micro\Container\Container;
@@ -20,9 +18,15 @@ use Micro\Log\ErrorHandler;
 use Micro\Log\File as FileLog;
 use Micro\Container\ContainerInterface;
 use Micro\Application\Resolver\ResolverInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Micro\Http\Request;
+use Micro\Http\Response\HtmlResponse;
 
 class Application implements ExceptionHandlerInterface, ResolverInterface
 {
+    use MiddlewareAwareTrait;
+
     /**
      * @var Container
      */
@@ -66,24 +70,12 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
             $this->boot();
 
-            $em = $this->container->get('event');
-            $request = $this->container->get('request');
-            $response = $this->container->get('response');
-
-            if (($eventResponse = $em->trigger('application.start', ['request' => $request])) instanceof Response) {
-                $response = $eventResponse;
-            } else {
-                $response = $this->dispatch($request, $response);
-            }
-
-            if (($eventResponse = $em->trigger('application.end', ['response' => $response])) instanceof Response) {
-                $response = $eventResponse;
-            }
+            $response = $this->dispatch();
 
             if (env('development')) {
                 foreach ($this->exceptions as $exception) {
                     if ($exception instanceof \Exception) {
-                        $response->write('<pre>' . $exception->getMessage() . '</pre>');
+                        $response->getBody()->write('<pre>' . $exception->getMessage() . '</pre>');
                     }
                 }
             }
@@ -95,6 +87,24 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
                 echo $e->getMessage();
             }
         }
+    }
+
+    /**
+     * Add middleware
+     *
+     * This method prepends new middleware to the app's middleware stack.
+     *
+     * @param  mixed    $callable The callback routine
+     *
+     * @return static
+     */
+    public function add($callable)
+    {
+        if (is_string($callable)) {
+            $callable = $this->container->get($callable);
+        }
+
+        return $this->addMiddleware($callable);
     }
 
     /**
@@ -110,7 +120,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
         if ($this->container->has('response') === \false) {
             $this->container->set('response', function () {
-                return new Response\HtmlResponse();
+                return new HtmlResponse();
             });
         }
 
@@ -236,62 +246,21 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
     /**
      * Unpackage the application request
-     * @param Request $request
-     * @param Response $response
-     * @return Response
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
      */
-    public function dispatch(Request $request = \null, Response $response = \null)
+    public function dispatch(ServerRequestInterface $request = \null, ResponseInterface $response = \null)
     {
         $request = $request ?: $this->container->get('request');
         $response = $response ?: $this->container->get('response');
-        $router = $this->getRouter();
 
         try {
-
-            if ($this->container->get('config')->get('router.default_routes')) {
-                $router->loadDefaultRoutes();
-            }
-
-            if (($route = $router->match($request)) === \null) {
-                throw new CoreException('Route not found', 404);
-            }
-
-            $request->withAttributes(
-                $route->getParams()
-            );
-
-            if (($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof Response) {
-                return $eventResponse;
-            }
-
-            $resolver = $this->container->get('resolver');
-
-            if ($resolver instanceof ResolverInterface) {
-                $response = $resolver->resolve($route->getHandler(), $request, $response);
-            } else {
-                throw new CoreException('Resolver is not instanceof ResolverInterface', 500);
-            }
-
+            $response = $this->callMiddlewareStack($request, $response);
         } catch (\Exception $e) {
-
             try {
-
-                $exceptionHandler = $this->container->get('exception.handler');
-
-                if (!$exceptionHandler instanceof ExceptionHandlerInterface) {
-                    throw $e;
-                }
-
-                if (($exceptionResponse = $exceptionHandler->handleException($e, $request, $response)) instanceof Response) {
-                    return $exceptionResponse;
-                }
-
-                if (env('development')) {
-                    $response->write((string) $exceptionResponse);
-                }
-
+                $response = $this->handleException($e, $request, $response);
             } catch (\Exception $e) {
-
                 if (env('development')) {
                     $response->write($e->getMessage());
                 }
@@ -301,9 +270,43 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         return $response;
     }
 
-    public function send(Response $response)
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @throws CoreException
+     * @return ResponseInterface
+     */
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response)
     {
-        if ($response->isEmpty()) {
+        $router = $this->getRouter();
+
+        if ($this->container->get('config')->get('router.default_routes')) {
+            $router->loadDefaultRoutes();
+        }
+
+        if (($route = $router->match($request)) === \null) {
+            throw new CoreException('Route not found', 404);
+        }
+
+        foreach ($route->getParams() as $k => $v) {
+            $request->withAttribute($k, $v);
+        }
+
+        return $route->run($request, $response);
+    }
+
+    /**
+     * @param ResponseInterface $response
+     */
+    public function send(ResponseInterface $response)
+    {
+        $empty = false;
+
+        if (method_exists($response, 'isEmpty')) {
+            $empty = $response->isEmpty();
+        }
+
+        if ($empty === \true) {
             $response->withoutHeader('Content-Type')
                      ->withoutHeader('Content-Length');
         }
@@ -333,7 +336,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         }
 
         // Body
-        if (!$response->isEmpty()) {
+        if ($empty === \false) {
 
             $body = $response->getBody();
 
@@ -371,11 +374,11 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
     /**
      * @param \Exception $e
-     * @param Request $request
-     * @param Response $response
-     * @return Response
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
      */
-    public function handleException(\Exception $e, Request $request, Response $response)
+    public function handleException(\Exception $e, ServerRequestInterface $request, ResponseInterface $response)
     {
         $errorHandler = $this->container->get('config')->get('error');
 
@@ -435,13 +438,13 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
     /**
      * @param string $package
-     * @param Request $request
-     * @param Response $response
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
      * @param bool $subRequest
      * @throws CoreException
-     * @return Response
+     * @return ResponseInterface
      */
-    public function resolve($package, Request $request, Response $response, $subRequest = \false)
+    public function resolve($package, ServerRequestInterface $request, ResponseInterface $response, $subRequest = \false)
     {
         if (!is_string($package) || strpos($package, '@') === \false) {
 
@@ -449,10 +452,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
                 $package = $package->__invoke($this->container);
             }
 
-            if ($package instanceof Response) {
+            if ($package instanceof ResponseInterface) {
                 return $package;
             } else {
-                return $response->write((string) $package);
+                return $response->getBody()->write((string) $package);
             }
         }
 
@@ -498,7 +501,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $scope = $packageInstance->getScope();
         }
 
-        if (($packageResponse = $packageInstance->$action()) instanceof Response) {
+        if (($packageResponse = $packageInstance->$action()) instanceof ResponseInterface) {
             return $packageResponse;
         }
 
@@ -529,26 +532,22 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
             $packageResponse->injectPaths((array) package_path($parts[0], 'Resources/views'));
 
-            if (($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof Response) {
-                return $eventResponse;
-            }
-
             if ($subRequest) {
                 $packageResponse->setRenderParent(\false);
             }
 
-            $response->write((string) $packageResponse->render());
+            $response->getBody()->write((string) $packageResponse->render());
 
         } else {
 
-            $response->write((string) $packageResponse);
+            $response->getBody()->write((string) $packageResponse);
         }
 
         return $response;
     }
 
     /**
-     * @return array of \Micro\Application\Package's
+     * @return array of Package 's
      */
     public function getPackages()
     {
@@ -558,7 +557,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     /**
      * @param string $package
      * @throws CoreException
-     * @return \Micro\Application\Package
+     * @return Package
      */
     public function getPackage($package)
     {

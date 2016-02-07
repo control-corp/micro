@@ -2,8 +2,18 @@
 
 namespace Micro\Router;
 
-class Route
+use Micro\Exception\Exception as CoreException;
+use Micro\Application\MiddlewareAwareTrait;
+use Micro\Container\ContainerAwareInterface;
+use Micro\Container\ContainerAwareTrait;
+use Micro\Application\Resolver\ResolverInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+class Route implements ContainerAwareInterface
 {
+    use ContainerAwareTrait, MiddlewareAwareTrait;
+
     const REGEX = '~
         ([^{}\[\]]+)|
         (\[)?
@@ -47,6 +57,11 @@ class Route
      * @var array
      */
     protected $params = [];
+
+    /**
+     * @var array
+     */
+    protected $middleware = [];
 
     /**
      * @param string $name
@@ -210,6 +225,11 @@ class Route
         return $this->handler;
     }
 
+    /**
+     * @param string $key
+     * @param string $value
+     * @return Route
+     */
     public function addCondition($key, $value)
     {
         $this->conditions[$key] = $value;
@@ -236,6 +256,11 @@ class Route
         return $this->conditions;
     }
 
+    /**
+     * @param string $key
+     * @param string $value
+     * @return Route
+     */
     public function addDefault($key, $value)
     {
         $this->defaults[$key] = $value;
@@ -310,5 +335,59 @@ class Route
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * Prepend middleware to the middleware collection
+     *
+     * @param mixed $callable The callback routine
+     *
+     * @return Route
+     */
+    public function add($callable)
+    {
+        if (is_string($callable)) {
+            $callable = $this->container->get($callable);
+        }
+
+        $this->middleware[] = $callable;
+
+        return $this;
+    }
+
+    /**
+     * Run route
+     *
+     * This method traverses the middleware stack, including the route's callable
+     * and captures the resultant HTTP response object. It then sends the response
+     * back to the Application.
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     */
+    public function run(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        foreach ($this->middleware as $middleware) {
+            $this->addMiddleware($middleware);
+        }
+
+        return $this->callMiddlewareStack($request, $response);
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @throws CoreException
+     */
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response)
+    {
+        $resolver = $this->container->get('resolver');
+
+        if ($resolver instanceof ResolverInterface) {
+            return $resolver->resolve($this->getHandler(), $request, $response);
+        }
+
+        throw new CoreException('Resolver is not instanceof ResolverInterface', 500);
     }
 }

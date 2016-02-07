@@ -6,5 +6,5 @@ use Interop\Container\ContainerInterface as Interop;
 
 interface ContainerInterface extends Interop, \ArrayAccess
 {
-    public function set($id, $callback);
+    public function set($id, $service);
 }

@@ -37,9 +37,6 @@ class Container implements ContainerInterface
      */
     public function get($service)
     {
-        /**
-         * Check if it has an alias
-         */
         if (isset($this->aliases[$service])) {
             $service = $this->resolveAlias($service);
         }
@@ -51,7 +48,7 @@ class Container implements ContainerInterface
         // call resolved
         if (array_key_exists($service, $this->resolved)) {
             return $this->factory[$service] === \true
-                   ? $this->resolved[$service]->__invoke($this)
+                   ? $this->resolved[$service]->create($this)
                    : $this->resolved[$service];
         }
 
@@ -65,7 +62,7 @@ class Container implements ContainerInterface
             $result->setContainer($this);
         }
 
-        if (is_object($result) && method_exists($result, '__invoke')) {
+        if (is_object($result) && method_exists($result, 'create')) {
             $this->factory[$service] = \true;
         } else {
             $this->factory[$service] = \false;
@@ -74,7 +71,7 @@ class Container implements ContainerInterface
         $this->resolved[$service] = $result;
 
         return $this->factory[$service] === \true
-               ? $this->resolved[$service]->__invoke($this)
+               ? $this->resolved[$service]->create($this)
                : $this->resolved[$service];
     }
 

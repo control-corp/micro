@@ -2,16 +2,16 @@
 
 namespace Micro\Application\Resolver;
 
-use Micro\Http\Request;
-use Micro\Http\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 interface ResolverInterface
 {
     /**
      * @param string $package
-     * @param Request $request
-     * @param Response $response
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
      * @param bool $subRequest
      */
-    public function resolve($package, Request $request, Response $response, $subRequest);
+    public function resolve($package, ServerRequestInterface $request, ResponseInterface $response, $subRequest);
 }

@@ -3,17 +3,17 @@
 namespace Micro\Router;
 
 use Micro\Exception\Exception as CoreException;
-use Micro\Http\Request;
 use Micro\Application\Utils;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Router implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
 
     /**
-     * @var \Micro\Http\Request
+     * @var ServerRequestInterface
      */
     protected $request;
 
@@ -43,10 +43,10 @@ class Router implements ContainerAwareInterface
     const URL_DELIMITER = '/';
 
     /**
-     * @param Request $requestUri
+     * @param ServerRequestInterface $requestUri
      * @return Route|null
      */
-    public function match(Request $request)
+    public function match(ServerRequestInterface $request)
     {
         $uri = $request->getUri()->getPath();
 
@@ -59,16 +59,16 @@ class Router implements ContainerAwareInterface
         }
 
         if (isset($this->routesStatic[$uri])) {
-            return $this->currentRoute = $this->routes[$this->routesStatic[$uri]];
-        }
-
-        foreach ($this->routes as $route) {
-            if ($route instanceof Route && !isset($this->routesStatic[$route->getPattern()]) && $route->match($uri)) {
-                return $this->currentRoute = $route;
+           return $this->currentRoute = $this->routes[$this->routesStatic[$uri]];
+        } else {
+            foreach ($this->routes as $route) {
+                if ($route instanceof Route && !isset($this->routesStatic[$route->getPattern()]) && $route->match($uri)) {
+                    return $this->currentRoute = $route;
+                }
             }
         }
 
-        return \null;
+        return $this->currentRoute = \null;
     }
 
     /**
@@ -99,6 +99,7 @@ class Router implements ContainerAwareInterface
         }
 
         $route = new Route($name, $pattern, $handler);
+        $route->setContainer($this->container);
 
         if (Route::isStatic($pattern)) {
             if (isset($this->routesStatic[$pattern])) {
@@ -149,7 +150,12 @@ class Router implements ContainerAwareInterface
             $request = $this->container->get('request');
 
             if ($basePath === \null) {
-                $basePath = $request->getUri()->getBasePath();
+                $uri = $request->getUri();
+                if (method_exists($uri, 'getBasePath')) {
+                    $basePath = $request->getUri()->getBasePath();
+                } else {
+                    $basePath = '/';
+                }
             }
 
             if ($queryParams === \null) {
