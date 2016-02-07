@@ -35,8 +35,6 @@ if (isset($config['packages'])) {
     ],
 ]);
 
-var_dump($container->get(App\Factory\Test::class));
-
 return $container; */
 
 $container = new Container();

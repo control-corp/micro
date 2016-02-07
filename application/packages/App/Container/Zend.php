@@ -5,9 +5,12 @@ namespace App\Container;
 use Zend\ServiceManager\ServiceManager;
 use Micro\Container\ContainerInterface;
 use Micro\Container\SharedContainer;
+use Micro\Container\ContainerAwareInterface;
 
 class Zend extends ServiceManager implements ContainerInterface
 {
+    private $awared = [];
+
     public function __construct(array $config = [], $useAsDefault = \true)
     {
         parent::__construct($config);
@@ -22,6 +25,18 @@ class Zend extends ServiceManager implements ContainerInterface
         $this->setFactory($id, $callback);
 
         return $this;
+    }
+
+    public function get($name)
+    {
+        $service = parent::get($name);
+
+        if (!isset($this->awared[$name]) && $service instanceof ContainerAwareInterface) {
+            $service->setContainer($this);
+            $this->awared[$name] = \true;
+        }
+
+        return $service;
     }
 
     /**
