@@ -121,10 +121,13 @@ class Request extends Message implements ServerRequestInterface
      * Create new HTTP request with data extracted from the application
      * Environment object
      *
+     * @param array $env
      * @return self
      */
-    public static function createFromEnvironment()
+    public static function createFromEnvironment(array $env = \null)
     {
+        $env = $env ?: $_SERVER;
+
         // headers
 
         $headers = [];
@@ -138,7 +141,7 @@ class Request extends Message implements ServerRequestInterface
             'AUTH_TYPE' => 1,
         ];
 
-        foreach ($_SERVER as $key => $value) {
+        foreach ($env as $key => $value) {
             $key = strtoupper($key);
             if (isset($special[$key]) || strpos($key, 'HTTP_') === 0) {
                 if ($key !== 'HTTP_CONTENT_LENGTH') {
@@ -173,11 +176,11 @@ class Request extends Message implements ServerRequestInterface
         }
 
         $request = new static(
-            $_SERVER['REQUEST_METHOD'],
-            Uri::createFromEnvironment(),
+            $env['REQUEST_METHOD'],
+            Uri::createFromEnvironment($env),
             $headers,
             $cookies,
-            $_SERVER,
+            $env,
             \null,
             UploadedFile::createFromEnvironment()
         );

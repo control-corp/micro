@@ -16,7 +16,7 @@ class Log implements LogInterface
 	public function write($message, $type = 'logs')
 	{
 	    if (static::$logger === \null) {
-	        throw new \Exception('Logger is not set');
+	        return;
 	    }
 
 	    static::$logger->write($message, $type);
@@ -39,7 +39,9 @@ class Log implements LogInterface
 	 */
 	public static function errorHandler($errno, $errstr, $errfile, $errline)
 	{
-	    static::getLogger()->write('(' . $errno . ') ' . $errstr . ' ' . $errfile . ' ' . $errline, 'errors');
+	    if (($logger = static::getLogger()) instanceof LogInterface) {
+	        $logger->write('(' . $errno . ') ' . $errstr . ' ' . $errfile . ' ' . $errline, 'errors');
+	    }
 
 	    return false;
 	}

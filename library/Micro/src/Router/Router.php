@@ -33,7 +33,7 @@ class Router implements ContainerAwareInterface
     protected $globalParams = [];
 
     /**
-     * @var \Micro\Router\Route
+     * @var Route
      */
     protected $currentRoute;
 
@@ -76,7 +76,7 @@ class Router implements ContainerAwareInterface
      * @param \Closure|string $handler
      * @param string $name
      * @throws \Exception
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function map($pattern, $handler, $name = \null)
     {
@@ -176,7 +176,7 @@ class Router implements ContainerAwareInterface
     /**
      * @param string $key
      * @param string $value
-     * @return \Micro\Router\Router
+     * @return Router
      */
     public function setGlobalParam($key, $value)
     {
@@ -200,7 +200,7 @@ class Router implements ContainerAwareInterface
     }
 
     /**
-     * @return array of \Micro\Router\Route's
+     * @return array of Route 's
      */
     public function getRoutes()
     {
@@ -209,7 +209,7 @@ class Router implements ContainerAwareInterface
 
     /**
      * @param string $name
-     * @return \Micro\Router\Route|\null
+     * @return Route|\null
      */
     public function getRoute($name)
     {
@@ -221,8 +221,8 @@ class Router implements ContainerAwareInterface
     }
 
     /**
-     * @param \Micro\Router\Route $route
-     * @return \Micro\Router\Router
+     * @param Route $route
+     * @return Router
      */
     public function setCurrentRoute(Route $route)
     {
@@ -232,7 +232,7 @@ class Router implements ContainerAwareInterface
     }
 
     /**
-     * @return \Micro\Router\Route
+     * @return Route
      */
     public function getCurrentRoute()
     {
@@ -240,7 +240,7 @@ class Router implements ContainerAwareInterface
     }
 
     /**
-     * @return \Micro\Router\Router
+     * @return Router
      */
     public function loadDefaultRoutes()
     {
@@ -298,12 +298,10 @@ class Router implements ContainerAwareInterface
     }
 
     /**
-     * @return \Micro\Router\Router
+     * @return Router
      */
-    public function mapFromConfig()
+    public function mapFromConfig(array $routes = [])
     {
-        $routes = $this->container->get('config')->get('routes', []);
-
         foreach ($routes as $name => $config) {
 
             if (!isset($config['pattern']) || !isset($config['handler'])) {

@@ -3,6 +3,7 @@
 namespace Micro\Exception;
 
 use Micro\Log\Log;
+use Micro\Log\LogInterface;
 
 class Exception extends \Exception
 {
@@ -20,6 +21,8 @@ class Exception extends \Exception
 
 	public static function exceptionHandler(\Exception $e)
 	{
-	    Log::getLogger()->write('(' . (int) $e->getCode() . ') ' . \strip_tags($e->getMessage()) . ' - ' . $_SERVER['REMOTE_ADDR'] . ' - ' . $_SERVER['REQUEST_URI'], 'exceptions');
+	    if (($logger = Log::getLogger()) instanceof LogInterface) {
+	        $logger->write('(' . (int) $e->getCode() . ') ' . \strip_tags($e->getMessage()) . ' - ' . $_SERVER['REMOTE_ADDR'] . ' - ' . $_SERVER['REQUEST_URI'], 'exceptions');
+	    }
 	}
 }

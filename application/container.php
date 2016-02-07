@@ -4,10 +4,10 @@ use Micro\Container\Container;
 use Micro\Application\Config;
 use Micro\Application\Utils;
 
-include_once 'library/Micro/autoload.php';
+include 'library/Micro/autoload.php';
 
 if (is_file($composer = 'vendor/autoload.php')) {
-    include_once $composer;
+    include $composer;
 }
 
 MicroLoader::register();

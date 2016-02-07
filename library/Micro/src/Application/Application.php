@@ -89,43 +89,51 @@ class Application implements ExceptionHandlerInterface
      */
     public function registerDefaultServices()
     {
-        if (!isset($this->container['request'])) {
-            $this->container['request'] = Request::createFromEnvironment();
+        if ($this->container->has('request') === \false) {
+            $this->container->set('request', function () {
+                return Request::createFromEnvironment();
+            });
         }
 
-        if (!isset($this->container['response'])) {
-            $this->container['response'] = new Response\HtmlResponse();
+        if ($this->container->has('response') === \false) {
+            $this->container->set('response', function () {
+                return new Response\HtmlResponse();
+            });
         }
 
-        if (!isset($this->container['event'])) {
-            $this->container['event'] = new Event\Manager();
+        if ($this->container->has('event') === \false) {
+            $this->container->set('event', function () {
+                return new Event\Manager();
+            });
         }
 
-        if (!isset($this->container['router'])) {
-            $this->container['router'] = new Router();
+        if ($this->container->has('router') === \false) {
+            $this->container->set('router', function () {
+                return new Router();
+            });
         }
 
-        if (!isset($this->container['exception.handler'])) {
-            $this->container['exception.handler'] = $this;
+        if ($this->container->has('exception.handler') === \false) {
+            $this->container->set('exception.handler', $this);
         }
 
-        if (!isset($this->container['exception.handler.fallback'])) {
-            $this->container['exception.handler.fallback'] = $this;
+        if ($this->container->has('exception.handler.fallback') === \false) {
+            $this->container->set('exception.handler.fallback', $this);
         }
 
         $config = $this->container->get('config');
 
-        if (!isset($this->container['acl'])) {
-            $this->container['acl'] = function ($app) use ($config) {
+        if ($this->container->has('acl') === \false) {
+            $this->container->set('acl', function ($app) use ($config) {
                 if ($config->get('acl.enabled')) {
                     return new Acl();
                 }
                 return \null;
-            };
+            });
         }
 
-        if (!isset($this->container['caches'])) {
-            $this->container['caches'] = function ($app) use ($config) {
+        if ($this->container->has('caches') === \false) {
+            $this->container->set('caches', function ($app) use ($config) {
                 $adapters = $config->get('cache.adapters', []);
                 $caches = [];
                 foreach ($adapters as $adapter => $adapterConfig) {
@@ -135,26 +143,26 @@ class Application implements ExceptionHandlerInterface
                     );
                 }
                 return $caches;
-            };
+            });
         }
 
-        if (!isset($this->container['cache'])) {
-            $this->container['cache'] = function ($container) use ($config) {
+        if ($this->container->has('cache') === \false) {
+            $this->container->set('cache', function ($container) use ($config) {
                 $adapters = $container->get('caches');
                 $default  = (string) $config->get('cache.default');
                 return isset($adapters[$default]) ? $adapters[$default] : \null;
-            };
+            });
         }
 
-        if (!isset($this->container['db'])) {
-            $this->container['db'] = function ($container) use ($config) {
+        if ($this->container->has('db') === \false) {
+            $this->container->set('db', function ($container) use ($config) {
                 $default  = $config->get('db.default');
                 $adapters = $config->get('db.adapters', []);
                 if (!isset($adapters[$default])) {
                     return \null;
                 }
                 return Database::factory($adapters[$default]['adapter'], $adapters[$default]);
-            };
+            });
         }
 
         if ($config->get('db.set_default_adapter')) {
@@ -165,20 +173,20 @@ class Application implements ExceptionHandlerInterface
             TableAbstract::setDefaultMetadataCache($this->container->get('cache'));
         }
 
-        if (!isset($this->container['translator'])) {
-            $this->container['translator'] = function () {
+        if ($this->container->has('translator') === \false) {
+            $this->container->set('translator', function () {
                 return new Translator();
-            };
+            });
         }
 
         /**
          * Register default logger
          */
-        if (!isset($this->container['logger'])) {
-            $this->container['logger'] = new FileLog();
+        if ($this->container->has('logger') === \false) {
+            $this->container->set('logger', function () {
+                return new FileLog();
+            });
         }
-
-        CoreLog::setLogger($this->container->get('logger'));
 
         /**
          * Register session config
@@ -189,7 +197,10 @@ class Application implements ExceptionHandlerInterface
             Session::register($sessionConfig);
         }
 
+        CoreLog::setLogger($this->container->get('logger'));
+
         CoreLog::register();
+
         CoreException::register();
 
         return $this;

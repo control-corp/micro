@@ -4,6 +4,15 @@ namespace Micro\Router;
 
 class Route
 {
+    const REGEX = '~
+        ([^{}\[\]]+)|
+        (\[)?
+        ([^{}\[\]]+)?
+        {([^}]+)}
+        ([^{}\[\]]+)?
+        (\])?
+    ~x';
+
     /**
      * @var string
      */
@@ -98,15 +107,7 @@ class Route
 
             $pattern = $this->pattern;
 
-            if (preg_match_all('
-            ~
-                ([^\[\{]+)|
-                (\[)?
-                ([^{}\[\]]*)?
-                {([^}]+)}
-                ([^{}\[\]]*)?
-                (\])?
-            ~xius', $pattern, $matches)) {
+            if (preg_match_all(static::REGEX, $pattern, $matches)) {
 
                 foreach ($matches[4] as $k => $param) {
 
@@ -162,27 +163,28 @@ class Route
 
         $error = false;
 
-        if (preg_match_all('~([^\[\{]+)|(\[)?([^{}\[\]]*){([^}]+)}([^{}\[\]]*)(\])?~', $this->pattern, $matches)) {
+        if (preg_match_all(static::REGEX, $this->pattern, $matches)) {
             foreach ($matches[4] as $k => $v) {
-                if (empty($v)) {
+                if (empty($v)) { // literal
                     $url .= $matches[1][$k];
                     unset($data[$v]);
                     continue;
                 }
-                if (array_key_exists($v, $data)) {
+                if (array_key_exists($v, $data)) { // exists in user params
                     $matches[4][$k] = $data[$v];
                     unset($data[$v]);
                 } else {
-                    if ($matches[2][$k] === '[') { // optional parameter
+                    if ($matches[2][$k] === '[') { // optional parameter. remove optionals if not exists
                         unset($matches[2][$k]);
                         unset($matches[3][$k]);
                         unset($matches[4][$k]);
                         unset($matches[5][$k]);
-                    } else {
+                    } else { // required parameter. mark as error
                         $error = true;
-                        $matches[4][$k] = '{' . $v . '}'; // required parameter
+                        $matches[4][$k] = '{' . $v . '}';
                     }
                 }
+                // build url
                 if (!empty($matches[3][$k])) $url .= $matches[3][$k];
                 if (!empty($matches[4][$k])) $url .= $matches[4][$k];
                 if (!empty($matches[5][$k])) $url .= $matches[5][$k];

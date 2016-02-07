@@ -63,15 +63,14 @@ class UploadedFile implements UploadedFileInterface
     /**
      * Create a normalized tree of UploadedFile instances from the Environment.
      *
+     * @params array $files
      * @return array|null A normalized tree of UploadedFile instances or null if none are provided.
      */
-    public static function createFromEnvironment()
+    public static function createFromEnvironment(array $files = \null)
     {
-        if (isset($_FILES)) {
-            return static::parseUploadedFiles($_FILES);
-        }
+        $files = $files ?: (isset($_FILES) ? $_FILES : []);
 
-        return [];
+        return static::parseUploadedFiles($files);
     }
 
     /**

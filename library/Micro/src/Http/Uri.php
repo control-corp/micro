@@ -152,6 +152,7 @@ class Uri implements UriInterface
     /**
      * Create new Uri from environment.
      *
+     * @param  array $env
      * @return self
      */
     public static function createFromEnvironment(array $env = \null)
