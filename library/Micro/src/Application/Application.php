@@ -70,7 +70,15 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
             $this->boot();
 
-            $response = $this->dispatch();
+            if (($eventResponse = $this->container->get('event')->trigger('application.start')) instanceof ServerRequestInterface) {
+                $response = $eventResponse;
+            } else {
+                $response = $this->dispatch();
+            }
+
+            if (($eventResponse = $this->container->get('event')->trigger('application.end', ['response' => $response])) instanceof ResponseInterface) {
+                $response = $eventResponse;
+            }
 
             if (env('development')) {
                 foreach ($this->exceptions as $exception) {
@@ -292,6 +300,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $request->withAttribute($k, $v);
         }
 
+        if (($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof ResponseInterface) {
+            return $eventResponse;
+        }
+
         return $route->run($request, $response);
     }
 
@@ -455,7 +467,8 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             if ($package instanceof ResponseInterface) {
                 return $package;
             } else {
-                return $response->getBody()->write((string) $package);
+                $response->getBody()->write((string) $package);
+                return $response;
             }
         }
 
@@ -531,6 +544,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             }
 
             $packageResponse->injectPaths((array) package_path($parts[0], 'Resources/views'));
+
+            if (($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface) {
+                return $eventResponse;
+            }
 
             if ($subRequest) {
                 $packageResponse->setRenderParent(\false);
