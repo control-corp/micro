@@ -25,15 +25,24 @@ class Config implements \ArrayAccess
 
     public function get($prop = \null, $default = \null)
     {
+        static $cache = [];
+
         $config = static::$config;
 
         if ($prop !== \null && \is_string($prop)) {
+
+            if (array_key_exists($prop, $cache)) {
+                return $cache[$prop];
+            }
+
             foreach (explode('.', $prop) as $key) {
                 if (!isset($config[$key])) {
-                    return $default;
+                    return $cache[$prop] = $default;
                 }
                 $config = &$config[$key];
             }
+
+            $cache[$prop] = $config;
         }
 
         return $config;

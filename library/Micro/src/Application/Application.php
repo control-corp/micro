@@ -173,10 +173,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         }
 
         if ($this->container->has('logger') === \false) {
-            $this->container->set('logger', ($logger = new FileLog()));
-        } else {
-            $logger = $this->container->get('logger');
+            $this->container->set('logger', new FileLog);
         }
+
+        $logger = $this->container->get('logger');
 
         ErrorHandler::register($logger);
 
@@ -198,7 +198,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         $config = $this->container->get('config');
 
         if ($this->container->has('acl') === \false) {
-            $this->container->set('acl', function ($app) use ($config) {
+            $this->container->set('acl', function () use ($config) {
                 if ($config->get('acl.enabled')) {
                     return new Acl();
                 }
@@ -207,7 +207,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         }
 
         if ($this->container->has('caches') === \false) {
-            $this->container->set('caches', function ($app) use ($config) {
+            $this->container->set('caches', function () use ($config) {
                 $adapters = $config->get('cache.adapters', []);
                 $caches = [];
                 foreach ($adapters as $adapter => $adapterConfig) {
