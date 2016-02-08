@@ -1,9 +1,10 @@
 {
-    "require": {
-        "psr/http-message": "^1.0",
-        "container-interop/container-interop": "^1.1",
-        "psr/log": "^1.0",
-        "monolog/monolog": "^1.17",
-        "zendframework/zend-servicemanager": "^3.0"
-    }
+  "require" : {
+    "psr/http-message" : "^1.0",
+    "container-interop/container-interop" : "^1.1",
+    "psr/log" : "^1.0",
+    "monolog/monolog" : "^1.17",
+    "zendframework/zend-servicemanager" : "^3.0",
+    "control-corp/micro-mail" : "dev-master"
+  }
 }

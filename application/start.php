@@ -8,8 +8,10 @@ $app = new Application($container);
 
 $app->map('/', 'App\Index@index');
 
-$app->map('/api[/{action}][/{id}]', function ($action) {
-    return 'App\Api@' . lcfirst(Micro\Application\Utils::camelize($action));
+$app->map('/api[/{action}][/{id}]', function ($action, $id) {
+
+    return 'App\Api@' . $action;
+
 })->setDefaults(['action' => 'index']);
 
 return $app;

@@ -9,8 +9,11 @@ use Micro\Http\Response;
 
 class Index
 {
-    public function index(Request $request, Response $response, ContainerInterface $container)
-    {
+    public function index(
+        Request $request,
+        Response $response,
+        ContainerInterface $container
+    ) {
         return new View('index');
     }
 }
