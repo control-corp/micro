@@ -395,10 +395,23 @@ class Route implements ContainerAwareInterface
      */
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response)
     {
+        $handler = $this->getHandler();
+
+        if ($handler instanceof ResponseInterface) {
+            return $handler;
+        }
+
+        if (!\is_string($handler) || \strpos($handler, '@') === \false) {
+
+            $response->getBody()->write((string) $handler);
+
+            return $response;
+        }
+
         $resolver = $this->container->get('resolver');
 
         if ($resolver instanceof ResolverInterface) {
-            return $resolver->resolve($this->getHandler(), $request, $response);
+            return $resolver->resolve($handler, $request, $response);
         }
 
         throw new CoreException('Resolver is not instanceof ResolverInterface', 500);

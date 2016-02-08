@@ -20,8 +20,12 @@ class Zend extends ServiceManager implements ContainerInterface
         }
     }
 
-    public function set($id, $callback)
+    public function set($id, $callback, $override = \true)
     {
+        if ($this->has($id) && $override === \false) {
+            return $this;
+        }
+
         if (is_object($callback) && !$callback instanceof \Closure) {
             $this->setService($id, $callback);
         } else {

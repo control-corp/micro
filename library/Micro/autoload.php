@@ -4,45 +4,54 @@ include __DIR__ . '/src/helpers.php';
 
 class MicroLoader
 {
-    protected static $paths;
-
+    protected static $prefixLengths = [];
+    protected static $prefixDirs = [];
     protected static $files = [];
 
     public static function register()
     {
         static::addPath('Micro\\', __DIR__ . '/src');
 
-        spl_autoload_register(array('MicroLoader', 'autoload'), true, true);
+        spl_autoload_register(['MicroLoader', 'autoload'], true, true);
     }
 
     public static function autoload($class)
     {
-        if ($class[0] === '\\') {
-            $class = ltrim($class, '\\');
+        // work around for PHP 5.3.0 - 5.3.2 https://bugs.php.net/50731
+        if ('\\' == $class[0]) {
+            $class = substr($class, 1);
         }
 
         if (isset(static::$files[$class])) {
-            include static::$files[$class];
-            return \true;
-        }
-
-        $parts  = explode('\\', $class);
-        $vendor = $parts[0] . '\\';
-
-        if (isset(static::$paths[$vendor])) {
-
-            $file = static::$paths[$vendor] . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, substr($class, strlen($vendor))) . '.php';
-
-            if (is_file($file)) {
-                include $file;
-                static::$files[$class] = $file;
-                return \true;
+            if (static::$files[$class] === false) {
+                return;
             }
-
+            include static::$files[$class];
+            return true;
         }
+
+        // PSR-4 lookup
+        $logicalPathPsr4 = strtr($class, '\\', DIRECTORY_SEPARATOR) . '.php';
+
+        $first = $class[0];
+        if (isset(static::$prefixLengths[$first])) {
+            foreach (static::$prefixLengths[$first] as $prefix => $length) {
+                if (0 === strpos($class, $prefix)) {
+                    foreach (static::$prefixDirs[$prefix] as $dir) {
+                        if (is_file($file = $dir . DIRECTORY_SEPARATOR . substr($logicalPathPsr4, $length))) {
+                            include $file;
+                            static::$files[$class] = $file;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        static::$files[$class] = false;
     }
 
-    public static function addPath($prefix, $path = \null)
+    public static function addPath($prefix, $path = null)
     {
         if (is_array($prefix)) {
             foreach ($prefix as $k => $v) {
@@ -51,11 +60,18 @@ class MicroLoader
             return;
         }
 
-        if ($path === \null) {
+        if ($path === null) {
             return;
         }
 
-        static::$paths[ rtrim($prefix, '\\') . '\\'] = rtrim($path, '/\\');
+        $length = strlen($prefix);
+
+        if ('\\' !== $prefix[$length - 1]) {
+            $prefix = $prefix . '\\';
+        }
+
+        static::$prefixLengths[$prefix[0]][$prefix] = $length;
+        static::$prefixDirs[$prefix] = (array) $path;
     }
 
     public static function getFiles()

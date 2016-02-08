@@ -20,7 +20,7 @@ trait MiddlewareAwareTrait
      * @var  \SplStack
      * @link http://php.net/manual/class.splstack.php
      */
-    protected $stack;
+    public $stack;
 
     /**
      * Middleware stack lock

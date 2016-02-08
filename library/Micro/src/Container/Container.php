@@ -20,6 +20,21 @@ class Container implements ContainerInterface
     protected $aliases = [];
 
     /**
+     * @var object
+     */
+    protected $binder;
+
+    /**
+     * @var array of bindings
+     */
+    protected $bindings = [];
+
+    /**
+     * @var array of resolved bindings
+     */
+    protected $ranBinders = [];
+
+    /**
      * @param array $config
      * @param boolean $useAsDefault
      */
@@ -52,19 +67,30 @@ class Container implements ContainerInterface
             $service = $this->resolveAlias($service);
         }
 
-        if (!isset($this->services[$service])) {
-            throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" not found!', $service), 500);
+        // call resolved
+        if (isset($this->resolved[$service])) {
+            return $this->resolved[$service] === \false
+                   ? \null
+                   : $this->resolved[$service];
         }
 
-        // call resolved
-        if (array_key_exists($service, $this->resolved)) {
-            return $this->resolved[$service];
+        if (!isset($this->services[$service])
+            && isset($this->bindings[$service])
+            && !isset($this->ranBinders[$this->bindings[$service]])
+            && $this->binder !== \null
+        ) {
+            $this->binder->{$method = $this->bindings[$service]}();
+            $this->ranBinders[$method] = \true;
+        }
+
+        if (!isset($this->services[$service])) {
+            throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" not found!', $service), 500);
         }
 
         $result = $this->services[$service];
 
         if ($result instanceof \Closure) {
-            $result = $result->__invoke($this);
+            $result = $result($this);
         }
 
         if (is_string($result) && class_exists($result)) {
@@ -79,20 +105,30 @@ class Container implements ContainerInterface
             $result = $result->create($this, $service);
         }
 
-        return $this->resolved[$service] = $result;
+        $this->resolved[$service] = $result === \null
+                                    ? \false
+                                    : $result;
+
+        return $result;
     }
 
     /**
      * (non-PHPdoc)
      * @see \Micro\Container\ContainerInterface::set()
      */
-    public function set($service, $callback)
+    public function set($service, $callback, $override = \true)
     {
         if (isset($this->resolved[$service])) {
             throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" is resolved!', $service), 500);
         }
 
+        if (isset($this->services[$service]) && $override === \false) {
+            return $this;
+        }
+
         $this->services[$service] = $callback;
+
+        return $this;
     }
 
     /**
@@ -116,6 +152,10 @@ class Container implements ContainerInterface
      */
     public function extend($offset, $callback)
     {
+        if (isset($this->aliases[$service])) {
+            $service = $this->resolveAlias($service);
+        }
+
         if (isset($this->resolved[$offset])) {
             throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" is resolved!', $offset), 500);
         }
@@ -176,6 +216,12 @@ class Container implements ContainerInterface
         return $alias;
     }
 
+    public function setBindings($binder, array $bindings)
+    {
+        $this->binder = $binder;
+        $this->bindings = $bindings;
+    }
+
     /**
      * (non-PHPdoc)
      * @see ArrayAccess::offsetGet()
@@ -209,12 +255,5 @@ class Container implements ContainerInterface
      */
     public function offsetUnset($offset)
     {
-        if (isset($this->services[$offset])) {
-            unset($this->services[$offset]);
-        }
-
-        if (isset($this->resolved[$offset])) {
-            unset($this->resolved[$offset]);
-        }
     }
 }

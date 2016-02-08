@@ -29,10 +29,10 @@ return [
             'application/resources',
         ]
     ],
-    'session' => [
+    /* 'session' => [
         'name' => 'TEST',
         'save_path' => 'data/session'
-    ],
+    ], */
     'translator' => [
         'adapter' => 'TranslatorArray',
         'options' => [

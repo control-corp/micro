@@ -71,9 +71,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         $this->useMiddleware = $useMiddleware;
         $this->useEvent = $useEvent;
 
-        $this->registerMinimumServices();
-
-        $this->registerExtraServices();
+        $this->registerServices();
     }
 
     /**
@@ -94,14 +92,6 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
             if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('application.end', ['response' => $response])) instanceof ResponseInterface) {
                 $response = $eventResponse;
-            }
-
-            if (env('development')) {
-                foreach ($this->exceptions as $exception) {
-                    if ($exception instanceof \Exception) {
-                        $response->getBody()->write('<pre>' . $exception->getMessage() . '</pre>');
-                    }
-                }
             }
 
             $this->send($response);
@@ -138,132 +128,6 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     }
 
     /**
-     * @return Application
-     */
-    public function registerMinimumServices()
-    {
-        if ($this->container->has('request') === \false) {
-            $this->container->set('request', function () {
-                return Request::createFromEnvironment();
-            });
-        }
-
-        if ($this->container->has('response') === \false) {
-            $this->container->set('response', function () {
-                return new HtmlResponse();
-            });
-        }
-
-        if ($this->container->has('event') === \false) {
-            $this->container->set('event', function () {
-                return new Event\Manager();
-            });
-        }
-
-        if ($this->container->has('router') === \false) {
-            $this->container->set('router', function () {
-                return new Router();
-            });
-        }
-
-        if ($this->container->has('resolver') === \false) {
-            $this->container->set('resolver', $this);
-        }
-
-        if ($this->container->has('exception.handler') === \false) {
-            $this->container->set('exception.handler', $this);
-        }
-
-        if ($this->container->has('logger') === \false) {
-            $this->container->set('logger', new FileLog);
-        }
-
-        $logger = $this->container->get('logger');
-
-        ErrorHandler::register($logger);
-
-        CoreException::setLogger($logger);
-
-        $config = $this->container->get('config');
-
-        foreach((array) $config->get('middleware', []) as $middleware) {
-            $this->add($middleware);
-        }
-    }
-
-    /**
-     * @return Application
-     */
-    public function registerExtraServices()
-    {
-        $config = $this->container->get('config');
-
-        if ($this->container->has('acl') === \false) {
-            $this->container->set('acl', function () use ($config) {
-                if ($config->get('acl.enabled')) {
-                    return new Acl();
-                }
-                return \null;
-            });
-        }
-
-        if ($this->container->has('caches') === \false) {
-            $this->container->set('caches', function () use ($config) {
-                $adapters = $config->get('cache.adapters', []);
-                $caches = [];
-                foreach ($adapters as $adapter => $adapterConfig) {
-                    $caches[$adapter] = Cache::factory(
-                        $adapterConfig['frontend']['adapter'], $adapterConfig['backend']['adapter'],
-                        $adapterConfig['frontend']['options'], $adapterConfig['backend']['options']
-                    );
-                }
-                return $caches;
-            });
-        }
-
-        if ($this->container->has('cache') === \false) {
-            $this->container->set('cache', function ($container) use ($config) {
-                $adapters = $container->get('caches');
-                $default  = (string) $config->get('cache.default');
-                return isset($adapters[$default]) ? $adapters[$default] : \null;
-            });
-        }
-
-        if ($this->container->has('db') === \false) {
-            $this->container->set('db', function ($container) use ($config) {
-                $default  = $config->get('db.default');
-                $adapters = $config->get('db.adapters', []);
-                if (!isset($adapters[$default])) {
-                    return \null;
-                }
-                return Database::factory($adapters[$default]['adapter'], $adapters[$default]);
-            });
-        }
-
-        if ($config->get('db.set_default_adapter')) {
-            TableAbstract::setDefaultAdapter($this->container->get('db'));
-        }
-
-        if ($config->get('db.set_default_cache')) {
-            TableAbstract::setDefaultMetadataCache($this->container->get('cache'));
-        }
-
-        if ($this->container->has('translator') === \false) {
-            $this->container->set('translator', function () {
-                return new Translator();
-            });
-        }
-
-        $sessionConfig = $config->get('session', []);
-
-        if (!empty($sessionConfig)) {
-            Session::register($sessionConfig);
-        }
-
-        return $this;
-    }
-
-    /**
      * @param string $pattern
      * @param mixed $handler
      * @param string $name
@@ -287,10 +151,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
         try {
 
-            if ($this->useMiddleware === \true) {
+            if ($this->useMiddleware === \true && $this->stack !== \null) {
                 return $this->callMiddlewareStack($request, $response);
             } else {
-                return $this($request, $response);
+                return $this->__invoke($request, $response);
             }
 
         } catch (\Exception $e) {
@@ -348,10 +212,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             return $eventResponse;
         }
 
-        if ($this->useMiddleware === \true) {
+        if ($this->useMiddleware === \true && $route->stack !== \null) {
             return $route->run($request, $response);
         } else {
-            return $route($request, $response);
+            return $route->__invoke($request, $response);
         }
     }
 
@@ -506,15 +370,8 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
      */
     public function resolve($package, ServerRequestInterface $request, ResponseInterface $response, $subRequest = \false)
     {
-        if (!is_string($package) || strpos($package, '@') === \false) {
-
-            if ($package instanceof ResponseInterface) {
-                return $package;
-            }
-
-            $response->getBody()->write((string) $package);
-
-            return $response;
+        if (!\is_string($package) || \strpos($package, '@') === \false) {
+            throw new CoreException(\sprintf('Package [%s] must be in [Handler@action] format', (is_object($package) ? get_class($package) : $package)));
         }
 
         list($package, $action) = explode('@', $package);
@@ -639,5 +496,139 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     public function getRouter()
     {
         return $this->container->get('router');
+    }
+
+    public function registerResolverBinder()
+    {
+        $this->container->set('resolver',
+            $this,
+            \false
+        );
+    }
+
+    public function registerExceptionBinder()
+    {
+        $this->container->set('exception.handler',
+            $this,
+            \false
+        );
+    }
+
+    public function registerTranslatorBinder()
+    {
+        $this->container->set('translator', function () {
+            return new Translator();
+        }, \false);
+    }
+
+    public function registerCacheBinder()
+    {
+        $config = $this->container->get('config');
+
+        $this->container->set('caches', function () use ($config) {
+            $adapters = $config->get('cache.adapters', []);
+            $caches = [];
+            foreach ($adapters as $adapter => $adapterConfig) {
+                $caches[$adapter] = Cache::factory(
+                    $adapterConfig['frontend']['adapter'], $adapterConfig['backend']['adapter'],
+                    $adapterConfig['frontend']['options'], $adapterConfig['backend']['options']
+                );
+            }
+            return $caches;
+        }, \false);
+
+        $this->container->set('cache', function ($container) use ($config) {
+            $adapters = $container->get('caches');
+            $default  = (string) $config->get('cache.default');
+            return isset($adapters[$default]) ? $adapters[$default] : \null;
+        }, \false);
+    }
+
+    public function registerAclBinder()
+    {
+        $this->container->set('acl', function ($c) {
+            if ($c->get('config')->get('acl.enabled')) {
+                return new Acl();
+            }
+            return \null;
+        }, \false);
+    }
+
+    public function registerDbBinder()
+    {
+        $config = $this->container->get('config');
+
+        $this->container->set('db', function ($container) use ($config) {
+            $default  = $config->get('db.default');
+            $adapters = $config->get('db.adapters', []);
+            if (!isset($adapters[$default])) {
+                return \null;
+            }
+            return Database::factory($adapters[$default]['adapter'], $adapters[$default]);
+        }, \false);
+
+        if ($config->get('db.set_default_adapter')) {
+            TableAbstract::setDefaultAdapter($this->container->get('db'));
+        }
+
+        if ($config->get('db.set_default_cache')) {
+            TableAbstract::setDefaultMetadataCache($this->container->get('cache'));
+        }
+    }
+
+    public function registerEventBinder()
+    {
+        $this->container->set('event', function () {
+            return new Event\Manager();
+        }, \false);
+    }
+
+    public function registerServices()
+    {
+        $this->container->set('request', function () {
+            return Request::createFromEnvironment();
+        }, \false);
+
+        $this->container->set('response', function () {
+            return new HtmlResponse();
+        }, \false);
+
+        $this->container->set('router', function () {
+            return new Router();
+        }, \false);
+
+        $this->container->set('logger',
+            new FileLog,
+            \false
+        );
+
+        $logger = $this->container->get('logger');
+
+        ErrorHandler::register($logger);
+
+        CoreException::setLogger($logger);
+
+        $config = $this->container->get('config');
+
+        foreach((array) $config->get('middleware', []) as $middleware) {
+            $this->add($middleware);
+        }
+
+        $sessionConfig = $config->get('session', []);
+
+        if (!empty($sessionConfig)) {
+            Session::register($sessionConfig);
+        }
+
+        $this->container->setBindings($this, [
+            'event' => 'registerEventBinder',
+            'resolver' => 'registerResolverBinder',
+            'exception.handler' => 'registerExceptionBinder',
+            'translator' => 'registerTranslatorBinder',
+            'caches' => 'registerCacheBinder',
+            'cache' => 'registerCacheBinder',
+            'acl' => 'registerAclBinder',
+            'db' => 'registerDbBinder',
+        ]);
     }
 }
