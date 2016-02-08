@@ -3,8 +3,9 @@
 namespace App\Service;
 
 use Micro\Container\ContainerInterface;
+use Micro\Container\ContainerFactoryInterface;
 
-class TestFactory
+class TestFactory implements ContainerFactoryInterface
 {
     public function create(ContainerInterface $container, $service)
     {

@@ -19,6 +19,10 @@ class Container implements ContainerInterface
      */
     protected $aliases = [];
 
+    /**
+     * @param array $config
+     * @param boolean $useAsDefault
+     */
     public function __construct(array $config = [], $useAsDefault = \true)
     {
         if ($useAsDefault === \true) {
@@ -71,7 +75,7 @@ class Container implements ContainerInterface
             $result->setContainer($this);
         }
 
-        if (is_object($result) && method_exists($result, 'create')) {
+        if ($result instanceof ContainerFactoryInterface) {
             $result = $result->create($this, $service);
         }
 
@@ -97,6 +101,10 @@ class Container implements ContainerInterface
      */
     public function has($service)
     {
+        if (isset($this->aliases[$service])) {
+            $service = $this->resolveAlias($service);
+        }
+
         return isset($this->services[$service]);
     }
 
@@ -110,6 +118,10 @@ class Container implements ContainerInterface
     {
         if (isset($this->resolved[$offset])) {
             throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" is resolved!', $offset), 500);
+        }
+
+        if (!isset($this->services[$offset])) {
+            throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" not found!', $offset), 500);
         }
 
         if (!is_object($callback) || !method_exists($callback, '__invoke')) {

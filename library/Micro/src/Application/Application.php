@@ -124,11 +124,13 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
      */
     public function add($middleware)
     {
-        if (is_string($middleware) && class_exists($middleware)) {
-            $middleware = new $middleware;
-        } elseif (is_string($middleware) && $this->container->has($middleware)) {
+        if (is_string($middleware) && $this->container->has($middleware)) {
             $middleware = $this->container->get($middleware);
-        } else {
+        } elseif (is_string($middleware) && class_exists($middleware)) {
+            $middleware = new $middleware;
+        }
+
+        if (!is_callable($middleware)) {
             return $this;
         }
 
@@ -359,10 +361,10 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
      */
     public function send(ResponseInterface $response)
     {
-        $empty = false;
+        $empty = \false;
 
-        if (method_exists($response, 'isEmpty')) {
-            $empty = $response->isEmpty();
+        if (in_array($response->getStatusCode(), [204, 205, 304])) {
+            $empty = \true;
         }
 
         if ($empty === \true) {
@@ -372,14 +374,14 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
         $size = $response->getBody()->getSize();
 
-        if ($size !== null && !$response->hasHeader('Content-Length')) {
+        if ($size !== \null && !$response->hasHeader('Content-Length')) {
             $response->withHeader('Content-Length', (string) $size);
         }
 
         // Send response
-        if (!headers_sent()) {
+        if (!\headers_sent()) {
             // Status
-            header(sprintf(
+            \header(\sprintf(
                 'HTTP/%s %s %s',
                 $response->getProtocolVersion(),
                 $response->getStatusCode(),
@@ -389,7 +391,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             // Headers
             foreach ($response->getHeaders() as $name => $values) {
                 foreach ($values as $value) {
-                    header(sprintf('%s: %s', $name, $value), false);
+                    \header(\sprintf('%s: %s', $name, $value), false);
                 }
             }
         }
@@ -403,14 +405,14 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
                 $body->rewind();
             }
 
-            $chunkSize      = $this->container->get('config')->get('settings.responseChunkSize', 4096);
+            $chunkSize      = $this->container->get('config')->get('response.responseChunkSize', 4096);
             $contentLength  = $response->getHeaderLine('Content-Length');
 
             if (!$contentLength) {
                 $contentLength = $body->getSize();
             }
 
-            $totalChunks    = ceil($contentLength / $chunkSize);
+            $totalChunks    = \ceil($contentLength / $chunkSize);
 
             $lastChunkSize  = $contentLength % $chunkSize;
 
@@ -424,7 +426,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
                 echo $body->read($chunkSize);
 
-                if (connection_status() != CONNECTION_NORMAL) {
+                if (\connection_status() != \CONNECTION_NORMAL) {
                     break;
                 }
             }

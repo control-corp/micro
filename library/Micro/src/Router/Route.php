@@ -224,7 +224,7 @@ class Route implements ContainerAwareInterface
     public function getHandler($invoke = \true)
     {
         if ($invoke === \true && $this->handler instanceof \Closure) {
-            return $this->handler->__invoke();
+            return $this->handler->__invoke($this->container);
         }
 
         return $this->handler;
@@ -373,11 +373,13 @@ class Route implements ContainerAwareInterface
 
             foreach ($this->middleware as $middleware) {
 
-                if (is_string($middleware) && class_exists($middleware)) {
-                    $middleware = new $middleware;
-                } elseif (is_string($middleware) && $this->container->has($middleware)) {
+                if (is_string($middleware) && $this->container->has($middleware)) {
                     $middleware = $this->container->get($middleware);
-                } else {
+                } elseif (is_string($middleware) && class_exists($middleware)) {
+                    $middleware = new $middleware;
+                }
+
+                if (!is_callable($middleware)) {
                     continue;
                 }
 
