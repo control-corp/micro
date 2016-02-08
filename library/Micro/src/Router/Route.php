@@ -21,7 +21,7 @@ class Route implements ContainerAwareInterface
         {([^}]+)}
         ([^{}\[\]]+)?
         (\])?
-    ~x';
+    ~xiu';
 
     /**
      * @var string
@@ -101,7 +101,7 @@ class Route implements ContainerAwareInterface
      */
     public function match($requestUri)
     {
-        if (preg_match('~^' . $this->compile() . '$~', $requestUri, $matches)) {
+        if (preg_match('~^' . $this->compile() . '$~iu', $requestUri, $matches)) {
 
             foreach ($this->params as $k => $v) {
                 if (isset($matches[$k])) {

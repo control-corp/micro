@@ -108,7 +108,7 @@ class Test
             }
         }
 
-        if (($file = \config('micro_debug.handlers.performance')) !== \null) {
+        if (($fileForCache = \config('micro_debug.handlers.performance')) !== \null) {
 
             $forStore = [];
 
@@ -118,7 +118,7 @@ class Test
                 }
             }
 
-            \file_put_contents($file, "<?php\nreturn " . \var_export($forStore, \true) . ";", \LOCK_EX);
+            \file_put_contents($fileForCache, "<?php\nreturn " . \var_export($forStore, \true) . ";", \LOCK_EX);
         }
     }
 }

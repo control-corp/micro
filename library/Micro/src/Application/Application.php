@@ -78,7 +78,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
     /**
      * Start the application
-     * @return \Micro\Application\Application
+     * @return Application
      */
     public function run()
     {
@@ -183,7 +183,6 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         ErrorHandler::register($logger);
 
         CoreException::setLogger($logger);
-
 
         $config = $this->container->get('config');
 

@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'middleware' => [
+        //App\Middleware\Test::class
+    ],
     'micro_debug' => [
         'handlers' => [
             'dev_tools' => 1,
