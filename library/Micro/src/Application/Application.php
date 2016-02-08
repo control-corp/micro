@@ -543,7 +543,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $action = $action . 'Action';
         }
 
-        if (!\method_exists($packageInstance, $action)) {
+        if (!\method_exists($packageInstance, $action) && !\method_exists($packageInstance, '__call')) {
             throw new CoreException('Method "' . $action . '" not found in "' . $package . '"', 404);
         }
 
