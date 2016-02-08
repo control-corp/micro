@@ -497,7 +497,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     }
 
     /**
-     * @param string $package
+     * @param mixed $package
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @param bool $subRequest
@@ -508,21 +508,18 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     {
         if (!is_string($package) || strpos($package, '@') === \false) {
 
-            if ($package instanceof \Closure) {
-                $package = $package->__invoke($this->container);
-            }
-
             if ($package instanceof ResponseInterface) {
                 return $package;
-            } else {
-                $response->getBody()->write((string) $package);
-                return $response;
             }
+
+            $response->getBody()->write((string) $package);
+
+            return $response;
         }
 
         list($package, $action) = explode('@', $package);
 
-        if (!class_exists($package, \true)) {
+        if (!\class_exists($package, \true)) {
             throw new CoreException('Package class "' . $package . '" not found', 404);
         }
 
@@ -536,22 +533,17 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         $request->withAttribute('controller', $controllerParam);
         $request->withAttribute('action', $actionParam);
 
-        if ($this->container->has($package)) {
-            $packageInstance = $this->container->get($package);
-        } else {
-            $packageInstance = new $package($request, $response, $this->container);
-            if ($packageInstance instanceof ContainerAwareInterface) {
-                $packageInstance->setContainer($this->container);
-            }
+        $packageInstance = new $package($request, $response, $this->container);
+
+        if ($packageInstance instanceof ContainerAwareInterface) {
+            $packageInstance->setContainer($this->container);
         }
 
         if ($packageInstance instanceof Controller) {
-            $action = lcfirst(Utils::camelize($action)) . 'Action';
-        } else {
-            $action = lcfirst(Utils::camelize($action));
+            $action = $action . 'Action';
         }
 
-        if (!method_exists($packageInstance, $action)) {
+        if (!\method_exists($packageInstance, $action)) {
             throw new CoreException('Method "' . $action . '" not found in "' . $package . '"', 404);
         }
 
@@ -562,11 +554,11 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $scope = $packageInstance->getScope();
         }
 
-        if (($packageResponse = $packageInstance->$action()) instanceof ResponseInterface) {
+        if (($packageResponse = $packageInstance->$action($request, $response, $this->container)) instanceof ResponseInterface) {
             return $packageResponse;
         }
 
-        if (is_object($packageResponse) && !$packageResponse instanceof View) {
+        if (\is_object($packageResponse) && !$packageResponse instanceof View) {
             throw new CoreException('Package response is object and must be instance of View', 500);
         }
 

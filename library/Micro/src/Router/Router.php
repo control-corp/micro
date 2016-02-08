@@ -252,21 +252,19 @@ class Router implements ContainerAwareInterface
     {
         if (!isset($this->routes['admin'])) {
 
-            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function () {
+            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function ($package, $controller, $action, $id) {
 
                 static $cache = [];
 
-                $params = $this->getParams();
-
-                $hash = 'admin_' . $params['package'] . '_' . $params['controller'] . '_' . $params['action'] . '_' . $params['id'];
+                $hash = 'admin_' . $package . '_' . $controller . '_' . $action . '_' . $id;
 
                 if (isset($cache[$hash])) {
                     return $cache[$hash];
                 }
 
-                $package = \ucfirst(Utils::camelize($params['package']));
-                $controller = \ucfirst(Utils::camelize($params['controller']));
-                $action = \lcfirst(Utils::camelize($params['action']));
+                $package = \ucfirst(Utils::camelize($package));
+                $controller = \ucfirst(Utils::camelize($controller));
+                $action = \lcfirst(Utils::camelize($action));
 
                 return $cache[$hash] = $package . '\\Controller\Admin\\' . $controller . '@' . $action;
 
@@ -277,21 +275,19 @@ class Router implements ContainerAwareInterface
 
         if (!isset($this->routes['default'])) {
 
-            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function () {
+            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function ($package, $controller, $action, $id) {
 
                 static $cache = [];
 
-                $params = $this->getParams();
-
-                $hash = 'front_' . $params['package'] . '_' . $params['controller'] . '_' . $params['action'] . '_' . $params['id'];
+                $hash = 'front_' . $package . '_' . $controller . '_' . $action . '_' . $id;
 
                 if (isset($cache[$hash])) {
                     return $cache[$hash];
                 }
 
-                $package = \ucfirst(Utils::camelize($params['package']));
-                $controller = \ucfirst(Utils::camelize($params['controller']));
-                $action = \lcfirst(Utils::camelize($params['action']));
+                $package = \ucfirst(Utils::camelize($package));
+                $controller = \ucfirst(Utils::camelize($controller));
+                $action = \lcfirst(Utils::camelize($action));
 
                 return $cache[$hash] = $package . '\\Controller\Front\\' . $controller . '@' . $action;
 

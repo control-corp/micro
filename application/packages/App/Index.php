@@ -2,15 +2,14 @@
 
 namespace App;
 
-use Micro\Container\ContainerAwareInterface;
-use Micro\Container\ContainerAwareTrait;
 use Micro\Application\View;
+use Micro\Container\ContainerInterface;
+use Micro\Http\Request;
+use Micro\Http\Response;
 
-class Index implements ContainerAwareInterface
+class Index
 {
-    use ContainerAwareTrait;
-
-    public function index()
+    public function index(Request $request, Response $response, ContainerInterface $container)
     {
         return new View('index');
     }

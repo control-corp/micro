@@ -1100,14 +1100,43 @@ class Request extends Message implements ServerRequestInterface
      *
      * @return null
      */
-    public function getParsedBodyParam($key, $default = null)
+    public function getParsedBodyParam($key, $default = \null)
     {
         $postParams = $this->getParsedBody();
         $result = $default;
+
         if (is_array($postParams) && isset($postParams[$key])) {
             $result = $postParams[$key];
         } elseif (is_object($postParams) && property_exists($postParams, $key)) {
             $result = $postParams->$key;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Fetch parameter value from request body.
+     *
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @param      $key
+     * @param null $default
+     *
+     * @return null
+     */
+    public function getPost($key = \null, $default = \null)
+    {
+        $postParams = $this->getParsedBody();
+        $postParams = is_array($postParams) ? $postParams : [];
+
+        if ($key === \null) {
+            return $postParams;
+        }
+
+        $result = $default;
+
+        if (isset($postParams[$key])) {
+            $result = $postParams[$key];
         }
 
         return $result;

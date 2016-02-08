@@ -169,11 +169,12 @@ class Page extends AbstractPage
             return \false;
         }
 
+        $route = clone $route;
         $route->setParams($this->routeParams);
 
         $resource = $route->getHandler();
 
-        if (!is_string($resource) || is_allowed($resource, $role)) {
+        if (!\is_string($resource) || \is_allowed($resource, $role)) {
             return \true;
         }
 
