@@ -34,7 +34,7 @@ if (isset($config['packages'])) {
 
 return $container; */
 
-$container = new Container();
+$container = new Container(isset($config['dependencies']) ? $config['dependencies'] : []);
 
 $container->set('config', new Config($config));
 

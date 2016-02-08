@@ -351,10 +351,6 @@ class Route implements ContainerAwareInterface
      */
     public function add($callable)
     {
-        if (is_string($callable)) {
-            $callable = $this->container->get($callable);
-        }
-
         $this->middleware[] = $callable;
 
         return $this;
@@ -374,9 +370,20 @@ class Route implements ContainerAwareInterface
     public function run(ServerRequestInterface $request, ResponseInterface $response)
     {
         if ($this->middlewareAreAdded === \false) {
+
             foreach ($this->middleware as $middleware) {
+
+                if (is_string($middleware) && class_exists($middleware)) {
+                    $middleware = new $middleware;
+                } elseif (is_string($middleware) && $this->container->has($middleware)) {
+                    $middleware = $this->container->get($middleware);
+                } else {
+                    continue;
+                }
+
                 $this->addMiddleware($middleware);
             }
+
             $this->middlewareAreAdded = \true;
         }
 

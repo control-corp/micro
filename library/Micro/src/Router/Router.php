@@ -323,6 +323,12 @@ class Router implements ContainerAwareInterface
             if (isset($config['defaults'])) {
                 $route->setDefaults($config['defaults']);
             }
+
+            if (isset($config['middleware'])) {
+                foreach ((array) $config['middleware'] as $middleware) {
+                    $route->add($middleware);
+                }
+            }
         }
 
         return $this;

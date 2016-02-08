@@ -118,17 +118,21 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
      *
      * This method prepends new middleware to the app's middleware stack.
      *
-     * @param  mixed    $callable The callback routine
+     * @param  mixed    $middleware The callback routine
      *
      * @return static
      */
-    public function add($callable)
+    public function add($middleware)
     {
-        if (is_string($callable)) {
-            $callable = $this->container->get($callable);
+        if (is_string($middleware) && class_exists($middleware)) {
+            $middleware = new $middleware;
+        } elseif (is_string($middleware) && $this->container->has($middleware)) {
+            $middleware = $this->container->get($middleware);
+        } else {
+            return $this;
         }
 
-        return $this->addMiddleware($callable);
+        return $this->addMiddleware($middleware);
     }
 
     /**
@@ -177,6 +181,13 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         ErrorHandler::register($logger);
 
         CoreException::setLogger($logger);
+
+
+        $config = $this->container->get('config');
+
+        foreach((array) $config->get('middleware', []) as $middleware) {
+            $this->add($middleware);
+        }
     }
 
     /**

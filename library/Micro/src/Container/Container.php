@@ -17,17 +17,24 @@ class Container implements ContainerInterface
     /**
      * @var array
      */
-    protected $factory = [];
-
-    /**
-     * @var array
-     */
     protected $aliases = [];
 
-    public function __construct($useAsDefault = \true)
+    public function __construct(array $config = [], $useAsDefault = \true)
     {
         if ($useAsDefault === \true) {
             SharedContainer::setInstance($this);
+        }
+
+        if (isset($config['services'])) {
+            foreach ($config['services'] as $id => $service) {
+                $this->set($id, $service);
+            }
+        }
+
+        if (isset($config['aliases'])) {
+            foreach ($config['aliases'] as $alias => $service) {
+                $this->alias($alias, $service);
+            }
         }
     }
 
@@ -47,9 +54,7 @@ class Container implements ContainerInterface
 
         // call resolved
         if (array_key_exists($service, $this->resolved)) {
-            return $this->factory[$service] === \true
-                   ? $this->resolved[$service]->create($this)
-                   : $this->resolved[$service];
+            return $this->resolved[$service];
         }
 
         $result = $this->services[$service];
@@ -58,21 +63,19 @@ class Container implements ContainerInterface
             $result = $result->__invoke($this);
         }
 
+        if (is_string($result) && class_exists($result)) {
+            $result = new $result;
+        }
+
         if ($result instanceof ContainerAwareInterface) {
             $result->setContainer($this);
         }
 
         if (is_object($result) && method_exists($result, 'create')) {
-            $this->factory[$service] = \true;
-        } else {
-            $this->factory[$service] = \false;
+            $result = $result->create($this, $service);
         }
 
-        $this->resolved[$service] = $result;
-
-        return $this->factory[$service] === \true
-               ? $this->resolved[$service]->create($this)
-               : $this->resolved[$service];
+        return $this->resolved[$service] = $result;
     }
 
     /**
@@ -200,10 +203,6 @@ class Container implements ContainerInterface
 
         if (isset($this->resolved[$offset])) {
             unset($this->resolved[$offset]);
-        }
-
-        if (isset($this->factory[$offset])) {
-            unset($this->factory[$offset]);
         }
     }
 }

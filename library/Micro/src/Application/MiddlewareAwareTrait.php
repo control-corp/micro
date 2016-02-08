@@ -49,7 +49,7 @@ trait MiddlewareAwareTrait
             throw new RuntimeException('Middleware can’t be added once the stack is dequeuing');
         }
 
-        if (is_null($this->stack)) {
+        if ($this->stack === \null) {
             $this->seedMiddlewareStack();
         }
 
@@ -80,15 +80,15 @@ trait MiddlewareAwareTrait
      */
     protected function seedMiddlewareStack(callable $kernel = null)
     {
-        if (!is_null($this->stack)) {
+        if ($this->stack !== \null) {
             throw new RuntimeException('MiddlewareStack can only be seeded once.');
         }
 
-        if ($kernel === null) {
+        if ($kernel === \null) {
             $kernel = $this;
         }
 
-        $this->stack = new SplStack;
+        $this->stack = new \SplStack;
 
         $this->stack->setIteratorMode(SplDoublyLinkedList::IT_MODE_LIFO | SplDoublyLinkedList::IT_MODE_KEEP);
 
@@ -105,17 +105,17 @@ trait MiddlewareAwareTrait
      */
     public function callMiddlewareStack(ServerRequestInterface $req, ResponseInterface $res)
     {
-        if (is_null($this->stack)) {
+        if ($this->stack === \null) {
             $this->seedMiddlewareStack();
         }
 
         $start = $this->stack->top();
 
-        $this->middlewareLock = true;
+        $this->middlewareLock = \true;
 
         $resp = $start($req, $res);
 
-        $this->middlewareLock = false;
+        $this->middlewareLock = \false;
 
         return $resp;
     }
