@@ -371,13 +371,24 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
     public function resolve($package, ServerRequestInterface $request, ResponseInterface $response, $subRequest = \false)
     {
         if (!\is_string($package) || \strpos($package, '@') === \false) {
-            throw new CoreException(\sprintf('Package [%s] must be in [Handler@action] format', (is_object($package) ? get_class($package) : $package)));
+            throw new CoreException(\sprintf('Package [%s] must be in [Handler@action] format', (\is_object($package) ? \get_class($package) : $package)));
         }
 
         list($package, $action) = explode('@', $package);
 
-        if (!\class_exists($package, \true)) {
-            throw new CoreException('Package class "' . $package . '" not found', 404);
+        if ($this->container->has($package)) {
+            $packageInstance = $this->container->get($package);
+            if (!\is_object($packageInstance)) {
+                throw new CoreException('Package "' . $package . '" is container service but it is not object', 500);
+            }
+        } else {
+            if (!\class_exists($package, \true)) {
+                throw new CoreException('Package class "' . $package . '" not found', 404);
+            }
+            $packageInstance = new $package($request, $response, $this->container);
+            if ($packageInstance instanceof ContainerAwareInterface) {
+                $packageInstance->setContainer($this->container);
+            }
         }
 
         $parts = explode('\\', $package);
@@ -390,18 +401,12 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
         $request->withAttribute('controller', $controllerParam);
         $request->withAttribute('action', $actionParam);
 
-        $packageInstance = new $package($request, $response, $this->container);
-
-        if ($packageInstance instanceof ContainerAwareInterface) {
-            $packageInstance->setContainer($this->container);
-        }
-
         if ($packageInstance instanceof Controller) {
             $action = $action . 'Action';
         }
 
         if (!\method_exists($packageInstance, $action) && !\method_exists($packageInstance, '__call')) {
-            throw new CoreException('Method "' . $action . '" not found in "' . $package . '"', 404);
+            throw new CoreException('Method "' . $action . '" not found in "' . get_class($packageInstance) . '"', 404);
         }
 
         $scope = '';
@@ -440,7 +445,11 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
                 $packageResponse->setTemplate(($scope ? $scope . '/' : '') . $controllerParam . '/' . $actionParam);
             }
 
-            $packageResponse->injectPaths((array) package_path($parts[0], 'Resources/views'));
+            try {
+                $packageResponse->injectPaths((array) package_path($parts[0], 'Resources/views'));
+            } catch (\Exception $e) {
+
+            }
 
             if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface) {
                 return $eventResponse;

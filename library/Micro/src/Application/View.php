@@ -74,7 +74,7 @@ class View
 
         foreach ($this->paths as $path) {
             $filePath = $path . '/' . $file;
-            if ((isset($this->resolvedPaths[$filePath]) || file_exists($filePath))) {
+            if ((isset($this->resolvedPaths[$filePath]) || \is_file($filePath))) {
                 $content = $this->evalFile($this->resolvedPaths[$filePath] = $filePath);
                 if ($renderParent === \true && $this->parent !== \null) {
                     $this->parent->setSections(array_merge(
