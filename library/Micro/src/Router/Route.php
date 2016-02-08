@@ -385,7 +385,11 @@ class Route implements ContainerAwareInterface
             $this->middlewareAreAdded = \true;
         }
 
-        return $this->callMiddlewareStack($request, $response);
+        if ($this->stack !== \null) {
+            return $this->callMiddlewareStack($request, $response);
+        } else {
+            return $this->__invoke($request, $response);
+        }
     }
 
     /**

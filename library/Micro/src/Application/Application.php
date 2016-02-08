@@ -7,7 +7,6 @@ use Micro\Router\Router;
 use Micro\Event;
 use Micro\Container\Container;
 use Micro\Container\ContainerAwareInterface;
-use Micro\Exception\ExceptionHandlerInterface;
 use Micro\Acl\Acl;
 use Micro\Database\Database;
 use Micro\Database\Table\TableAbstract;
@@ -23,7 +22,7 @@ use Psr\Http\Message\ResponseInterface;
 use Micro\Http\Request;
 use Micro\Http\Response\HtmlResponse;
 
-class Application implements ExceptionHandlerInterface, ResolverInterface
+class Application implements ResolverInterface
 {
     use MiddlewareAwareTrait;
 
@@ -163,7 +162,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
 
                 $exceptionHandler = $this->container->get('exception.handler');
 
-                if (!$exceptionHandler instanceof ExceptionHandlerInterface) {
+                if (!\is_object($exceptionHandler) || !\method_exists($exceptionHandler, 'handleException')) {
                     throw $e;
                 }
 
@@ -171,9 +170,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
                     return $exceptionResponse;
                 }
 
-                if (env('development')) {
-                    $response->getBody()->write((string) $exceptionResponse);
-                }
+                $response->getBody()->write((string) $exceptionResponse);
 
             } catch (\Exception $e) {
 
@@ -200,7 +197,7 @@ class Application implements ExceptionHandlerInterface, ResolverInterface
             $router->loadDefaultRoutes();
         }
 
-        if (($route = $router->match($request)) === \null) {
+        if (($route = $router->match($request->getUri()->getPath())) === \null) {
             throw new CoreException('Route not found', 404);
         }
 

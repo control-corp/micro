@@ -38,4 +38,20 @@ $container = new Container(isset($config['dependencies']) ? $config['dependencie
 
 $container->set('config', new Config($config));
 
+/* $container->set('logger', function () {
+    $monolog = new Monolog\Logger('app');
+    $handler = new Monolog\Handler\StreamHandler('data/log/your.html', Monolog\Logger::DEBUG);
+    $handler->setFormatter(new Monolog\Formatter\HtmlFormatter());
+    $monolog->pushHandler($handler);
+    return $monolog;
+}); */
+
+/* $container->set('exception.handler', function () {
+    $whoops = new Whoops\Run();
+    $whoops->allowQuit(false);
+    $whoops->writeToOutput(false);
+    $whoops->pushHandler(new Whoops\Handler\PrettyPageHandler());
+    return $whoops;
+}); */
+
 return $container;

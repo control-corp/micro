@@ -6,16 +6,10 @@ use Micro\Exception\Exception as CoreException;
 use Micro\Application\Utils;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
-use Psr\Http\Message\ServerRequestInterface;
 
 class Router implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
-
-    /**
-     * @var ServerRequestInterface
-     */
-    protected $request;
 
     /**
      * @var array
@@ -43,13 +37,11 @@ class Router implements ContainerAwareInterface
     const URL_DELIMITER = '/';
 
     /**
-     * @param ServerRequestInterface $requestUri
+     * @param string $uri
      * @return Route|null
      */
-    public function match(ServerRequestInterface $request)
+    public function match($uri)
     {
-        $uri = $request->getUri()->getPath();
-
         if (empty($uri) || $uri[0] !== static::URL_DELIMITER) {
             $uri = static::URL_DELIMITER . $uri;
         }

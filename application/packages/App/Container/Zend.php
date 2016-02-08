@@ -9,7 +9,20 @@ use Micro\Container\ContainerAwareInterface;
 
 class Zend extends ServiceManager implements ContainerInterface
 {
+    /**
+     * @var array of awared
+     */
     private $awared = [];
+
+    /**
+     * @var array of bindings
+     */
+    private $bindings = [];
+
+    /**
+     * @var array of resolved bindings
+    */
+    private $ranBinders = [];
 
     public function __construct(array $config = [], $useAsDefault = \true)
     {
@@ -35,8 +48,23 @@ class Zend extends ServiceManager implements ContainerInterface
         return $this;
     }
 
+    public function setBindings($binder, array $bindings)
+    {
+        $this->binder = $binder;
+        $this->bindings = $bindings;
+    }
+
     public function get($name)
     {
+        if (!isset($this->factories[$name])
+            && isset($this->bindings[$name])
+            && !isset($this->ranBinders[$this->bindings[$name]])
+            && $this->binder !== \null
+        ) {
+            $this->binder->{$method = $this->bindings[$name]}();
+            $this->ranBinders[$method] = \true;
+        }
+
         $service = parent::get($name);
 
         if (!isset($this->awared[$name]) && $service instanceof ContainerAwareInterface) {
