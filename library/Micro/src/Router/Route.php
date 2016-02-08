@@ -6,7 +6,6 @@ use Micro\Exception\Exception as CoreException;
 use Micro\Application\MiddlewareAwareTrait;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
-use Micro\Application\Resolver\ResolverInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -414,10 +413,10 @@ class Route implements ContainerAwareInterface
 
         $resolver = $this->container->get('resolver');
 
-        if ($resolver instanceof ResolverInterface) {
+        if (\is_object($resolver) && \method_exists($resolver, 'resolve')) {
             return $resolver->resolve($handler, $request, $response);
         }
 
-        throw new CoreException('Resolver is not instanceof ResolverInterface', 500);
+        throw new CoreException(\sprintf('Resolver [%s] does not have method "resolve"', \is_object($resolver) ? get_class($resolver) : gettype($resolver)), 500);
     }
 }

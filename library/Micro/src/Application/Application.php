@@ -16,13 +16,12 @@ use Micro\Session\Session;
 use Micro\Log\ErrorHandler;
 use Micro\Log\File as FileLog;
 use Micro\Container\ContainerInterface;
-use Micro\Application\Resolver\ResolverInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Micro\Http\Request;
 use Micro\Http\Response\HtmlResponse;
 
-class Application implements ResolverInterface
+class Application
 {
     use MiddlewareAwareTrait;
 
@@ -321,11 +320,11 @@ class Application implements ResolverInterface
 
         $resolver = $this->container->get('resolver');
 
-        if ($resolver instanceof ResolverInterface) {
+        if (\is_object($resolver) && \method_exists($resolver, 'resolve')) {
             return $resolver->resolve($package, $request, $response);
         }
 
-        throw new CoreException('Resolver is not instanceof ResolverInterface', 500);
+        throw new CoreException(\sprintf('Resolver [%s] does not have method "resolve"', \is_object($resolver) ? get_class($resolver) : gettype($resolver)), 500);
     }
 
     /**
