@@ -1,0 +1,72 @@
+<?php
+
+$this->extend('layouts/admin/default');
+
+$label = ($this->item['id'] ? 'Редактиране' : 'Добавяне');
+
+$this->section('title', $label);
+
+$this->hookToMenu('main', 'nomenclatures.statuses', $label);
+
+$this->section('styles', '<link href="assets/js/colorpicker/css/bootstrap-colorpicker.min.css" rel="stylesheet" type="text/css" />');
+$this->section('scripts', '<script src="assets/js/colorpicker/js/bootstrap-colorpicker.min.js"></script>');
+
+?>
+
+<h1><?php echo $label; ?></h1>
+
+<form class="form-horizontal" action="<?php echo route(); ?>" method="post" enctype="multipart/form-data">
+    <div style="margin-bottom: 20px">
+        <?php echo $this->form->btnSave; ?>
+        <?php echo $this->form->btnApply; ?>
+        <?php echo $this->form->btnBack; ?>
+    </div>
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-default">
+                <div class="panel-heading">&nbsp;</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-6">
+                            <?php echo $this->form->name->renderLabel(); ?>
+                            <?php echo $this->form->name; ?>
+                        </div>
+                        <div class="col-md-3">
+                            <?php echo $this->form->code->renderLabel(); ?>
+                            <?php echo $this->form->code; ?>
+                        </div>
+                        <div class="col-md-3">
+                            <?php echo $this->form->color->renderLabel(); ?>
+                            <?php echo $this->form->color; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">&nbsp;</div>
+                <div class="panel-body">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <div class="col-md-12">
+                            <?php echo $this->form->active; ?>
+                            <?php echo $this->form->active->getLabel(); ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <?php echo $this->form->btnSave; ?>
+        <?php echo $this->form->btnApply; ?>
+        <?php echo $this->form->btnBack; ?>
+    </div>
+</form>
+<?php $this->start('scripts'); ?>
+<script>
+$(function(){
+    $('.color').colorpicker();
+});
+</script>
+<?php $this->stop(); ?>

@@ -1,0 +1,203 @@
+<?php
+
+$this->extend('layouts/admin/default');
+
+$label = ($this->item['id'] ? 'Редактиране' : 'Добавяне');
+
+$this->section('title', $label);
+
+$this->hookToMenu('main', 'brands', $label);
+
+?>
+
+<h1><?php echo $label; ?></h1>
+
+<form class="form-horizontal" action="<?php echo route(); ?>" method="post" enctype="multipart/form-data">
+    <div style="margin-bottom: 20px">
+        <?php echo $this->form->btnSave; ?>
+        <?php echo $this->form->btnApply; ?>
+        <?php echo $this->form->btnBack; ?>
+    </div>
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-default">
+                <div class="panel-heading">&nbsp;</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-6">
+                            <?php echo $this->form->name->renderLabel(); ?>
+                            <?php echo $this->form->name; ?>
+                        </div>
+                        <div class="col-md-6">
+                            <?php echo $this->form->countryId->renderLabel(); ?>
+                            <?php echo $this->form->countryId; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-6">
+                            <?php echo $this->form->typeId->renderLabel(); ?>
+                            <?php echo $this->form->typeId; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3">
+                            <?php echo $this->form->requestNum->renderLabel(); ?>
+                            <?php echo $this->form->requestNum; ?>
+                        </div>
+                        <div class="col-md-3">
+                            <?php echo $this->form->requestDate->renderLabel(); ?>
+                            <?php echo $this->form->requestDate; ?>
+                        </div>
+                        <div class="col-md-3">
+                            <?php echo $this->form->registerNum->renderLabel(); ?>
+                            <?php echo $this->form->registerNum; ?>
+                        </div>
+                        <div class="col-md-3">
+                            <?php echo $this->form->registerDate->renderLabel(); ?>
+                            <?php echo $this->form->registerDate; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->description->renderLabel(); ?>
+                            <?php echo $this->form->description; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <h3 style="margin: 0 0 10px 0">История на статуса</h3>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead><tr><th>Статус</th><th>Дата</th><th>Пояснение</th></tr></thead>
+                                <?php if ($this->item->getId()) : ?>
+                                    <tbody>
+                                <?php
+                                foreach ($this->item->getStatusHistory() as $row) :
+                                    $date = new \DateTime($row['date']);
+                                ?>
+                                        <tr>
+                                            <td><?php echo $this->nomStatuses[$row['statusId']]; ?></td>
+                                            <td><?php echo $date->format('d.m.Y'); ?></td>
+                                            <td><?php echo $row['note']; ?></td>
+                                        </tr>
+                                <?php endforeach; ?>
+                                    </tbody>
+                                <?php endif; ?>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                         <div class="col-md-12">
+                            <h3 style="margin: 0 0 10px 0">История на цените</h3>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead><tr><th>Цена</th><th>Дата</th><th>Коментар</th></tr></thead>
+                            <?php if ($this->item->getId()) : ?>
+                                    <tbody>
+                                <?php
+                                foreach ($this->item->getPriceHistory() as $row) :
+                                    $date = new \DateTime($row['date']);
+                                ?>
+                                        <tr>
+                                            <td><?php echo $row['price']; ?></td>
+                                            <td><?php echo $date->format('d.m.Y'); ?></td>
+                                            <td><?php echo $row['comment']; ?></td>
+                                        </tr>
+                                <?php endforeach; ?>
+                                    </tbody>
+                            <?php endif; ?>
+                                </table>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">Допълнителни настройки</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <label class="control-label required">Снимка</label>
+                            <input type="file" name="image" />
+                            <?php if ($this->item->getThumb() !== null) : ?>
+                            <img src="<?php echo 'uploads/brands/thumbs/' . $this->item->getId() . '.' . pathinfo($this->item->getImage(), PATHINFO_EXTENSION) . '?r=' . time(); ?>" />
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->active; ?>
+                            <?php echo $this->form->active->getLabel(); ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->notifierId->renderLabel(); ?>
+                            <?php echo $this->form->notifierId; ?>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <div class="col-md-12">
+                            <?php echo $this->form->classes->renderLabel(); ?>
+                            <?php echo $this->form->classes; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Статус на марката</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->statusId->renderLabel(); ?>
+                            <?php echo $this->form->statusId; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->statusDate->renderLabel(); ?>
+                            <?php echo $this->form->statusDate; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->statusNote->renderLabel(); ?>
+                            <?php echo $this->form->statusNote; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Цени към марката</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->price->renderLabel(); ?>
+                            <?php echo $this->form->price; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->priceDate->renderLabel(); ?>
+                            <?php echo $this->form->priceDate; ?>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <div class="col-md-12">
+                            <?php echo $this->form->priceComment->renderLabel(); ?>
+                            <?php echo $this->form->priceComment; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <?php echo $this->form->btnSave; ?>
+        <?php echo $this->form->btnApply; ?>
+        <?php echo $this->form->btnBack; ?>
+    </div>
+</form>

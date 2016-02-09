@@ -1,0 +1,16 @@
+<?php
+
+$reNewDate = '';
+$alert = 'brand-default';
+$txt = '';
+if ($this->item->getReNewDate()) {
+    $date = new \DateTime($this->item->getReNewDate());
+    $reNewDate = $date->format('d.m.Y');
+    $now = new \DateTime();
+    $diff = $date->diff($now);    $months = $diff->days / 30;    $months = (int) round($months);
+    if ($diff->invert === 0 || $months <= 3) {
+        $alert = 'brand-alert';
+        $txt = '&nbsp;/<br />' . ($months . ' изтичащи месеца');
+    }
+}
+echo '<div class="' . $alert . '">' . $reNewDate . $txt . '</div>';

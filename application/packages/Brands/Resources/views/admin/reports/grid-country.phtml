@@ -1,0 +1,6 @@
+<?php
+
+$countries = (new Nomenclatures\Model\Countries())->fetchCachedPairs(null, null, ['name' => 'asc']);
+$cc = (new Nomenclatures\Model\Countries())->fetchCachedPairs(null, ['id', 'ISO3166Code'], ['name' => 'asc']);
+
+echo $cc[$this->value] . ' ' . $countries[$this->value];

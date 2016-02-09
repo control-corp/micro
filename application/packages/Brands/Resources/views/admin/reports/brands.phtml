@@ -1,0 +1,144 @@
+<?php $this->extend('layouts/admin/default'); ?>
+
+<h1>Марки</h1>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Филтри</div>
+            <div class="panel-body">
+                <form class="form-horizontal filter" action="<?php echo route(); ?>" method="post">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->brandId->renderLabel(); ?>
+                            <?php echo $this->form->brandId; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <input class="btn btn-primary" type="submit" name="filters[filter]" value="Филтриране" />
+                            <input class="btn btn-default" type="submit" name="filters[reset]" value="Нулиране" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<?php
+if (!empty($this->brands)) :
+    $brand = $this->form->brandId->getValue();
+?>
+    <div class="col-md-12 table-responsive">
+        <?php
+        $typesCount = count($this->types);
+        foreach ($this->continents as $continentId => $continent) :
+        ?>
+        <h3><?php echo $continent; ?></h3>
+        <table class="table table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th style="width: 14%" class="text-center">Държава</th>
+                    <th style="width: 32%" class="text-center" colspan="<?php echo $typesCount; ?>"><?php echo $brand; ?><br />статус</th>
+                    <th style="width: 32%" class="text-center" colspan="<?php echo $typesCount; ?>"><?php echo $brand; ?><br />коментар</th>
+                    <th style="width: 32%" class="text-center" colspan="<?php echo $typesCount; ?>">Предприети действия</th>
+                </tr>
+                <tr>
+                    <th>
+                        <div>Общо държави: <?php echo (isset($this->countries[$continentId]) ? count($this->countries[$continentId]) : 0); ?></div>
+                        <div>Общо население: <div><?php echo (isset($this->populations[$continentId]) ? number_format($this->populations[$continentId], 0, ".", " ") : 0); ?></div></div>
+                    </th>
+                <?php
+                foreach (range(1, 3) as $i) :
+                    foreach ($this->types as $typeId => $type) :
+                ?>
+                    <th class="vtop text-center">
+                        <?php echo $type; ?>
+                    <?php if (isset($this->brandImages[$typeId]) && file_exists($this->brandImages[$typeId]['path'])) : ?>
+                        <div style="margin-top: 5px"><img src="<?php echo $this->brandImages[$typeId]['image'] . '?r=' . time(); ?>" /></div>
+                    <?php endif; ?>
+                    </th>
+                <?php
+                    endforeach;
+                endforeach;
+                ?>
+                </tr>
+            </thead>
+            <tbody>
+        <?php
+        if (isset($this->countries[$continentId])) :
+            foreach ($this->countries[$continentId] as $countryId => $country) :
+        ?>
+                <tr style="background-color: <?php echo $country['color'] ? $country['color'] : '#FFFFFF'; ?>">
+                    <td><?php echo $country['ISO3166Code']; ?> <?php echo $country['name']; ?> <div><?php echo number_format($country['population'], 0, ".", " "); ?></div></td>
+                <?php foreach ($this->types as $typeId => $type) : ?>
+                    <td class="text-center">
+                    <?php
+                    if (isset($this->brands[$countryId][$typeId])) :
+                        $brandEntity = $this->brands[$countryId][$typeId];
+                        if (isset($this->statuses[$brandEntity['statusId']])) {
+                            echo '<div style="padding: 5px; background-color: ' . (isset($this->statusesColors[$brandEntity['statusId']]) ? $this->statusesColors[$brandEntity['statusId']] : '#ffffff') . '">';
+                            echo $this->statuses[$brandEntity['statusId']] . '<br />';
+                            $date = $brandEntity['statusDate'];
+                            if ($date) {
+                                $date = new \DateTime($date);
+                                echo $date->format('d.m.Y');
+                            }
+                            echo '</div>';
+                        }
+                    endif;
+                    ?>
+                    </td>
+                <?php endforeach; ?>
+                <?php foreach ($this->types as $typeId => $type) : ?>
+                    <td>
+                    <?php
+                    if (isset($this->brands[$countryId][$typeId])) :
+                    echo $this->brands[$countryId][$typeId]['statusNote'];
+                    endif;
+                    ?>
+                    </td>
+                <?php endforeach; ?>
+                <?php foreach ($this->types as $typeId => $type) : ?>
+                    <td>
+                    <?php
+                    if (isset($this->brands[$countryId][$typeId])) :
+                    echo $this->brands[$countryId][$typeId]['description'];
+                    endif;
+                    ?>
+                    </td>
+                <?php endforeach; ?>
+                </tr>
+        <?php
+            endforeach;
+        endif;
+        ?>
+            </tbody>
+        </table>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+</div>
+
+<?php $this->section('scripts', '<script src="assets/js/typeahead/typeahead.js"></script>'); ?>
+
+<?php $this->start('scripts'); ?>
+<script>
+$('.typeahead').typeahead({
+	items: 9999,
+	ajax: {
+	    url: '<?php echo route(\null, array('action' => 'ajax-get-brands')); ?>',
+	    triggerLength: 2
+	}
+});
+</script>
+<?php $this->stop(); ?>
+
+<?php $this->start('styles'); ?>
+<style>
+.typeahead.dropdown-menu {
+	max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+</style>
+<?php $this->stop(); ?>

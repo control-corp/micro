@@ -1,0 +1,125 @@
+<?php $this->extend('layouts/admin/default'); ?>
+
+<h1>Марки</h1>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">Филтри</div>
+            <div class="panel-body">
+                <form class="form-horizontal filter" action="<?php echo route(); ?>" method="post">
+                    <div class="form-group">
+                        <div class="col-md-4">
+                            <?php echo $this->form->brandId->renderLabel(); ?>
+                            <?php echo $this->form->brandId; ?>
+                        </div>
+                        <div class="col-md-4">
+                            <?php echo $this->form->continentId->renderLabel(); ?>
+                            <?php echo $this->form->continentId; ?>
+                        </div>
+                        <div class="col-md-4">
+                            <?php echo $this->form->countryId->renderLabel(); ?>
+                            <?php echo $this->form->countryId; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <label class="control-label">Избрани марки</label>
+                            <div id="selected-brands">
+                    <?php
+                    if (!empty($this->selectedBrands)) :
+                        foreach ($this->selectedBrands as $selectedBrand) :
+                    ?>
+                            <div data-id="<?php echo $selectedBrand; ?>"><?php echo $selectedBrand; ?> <span style="cursor: pointer; color: red;" onclick="removeBrand.call(this)">x</span></div>
+                    <?php
+                        endforeach;
+                    else:
+                    ?>
+                            <span id="no-selected-brands">Няма избрани марки</span>
+                    <?php
+                    endif;
+                    ?>
+                            </div>
+                            <input type="hidden" name="filters[brands]" id="brands" value="<?php echo json_encode($this->selectedBrands); ?>" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <input class="btn btn-primary" id="btnFilter" type="submit" name="filters[filter]" value="Филтриране" />
+                            <input class="btn btn-default" type="submit" name="filters[reset]" value="Нулиране" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <?php echo $this->grid; ?>
+    </div>
+</div>
+<?php $this->section('scripts', '<script src="assets/js/typeahead/typeahead.js"></script>'); ?>
+
+<?php $this->start('scripts'); ?>
+<script>
+$('#btnFilter').on('click', function () {
+	var selectedBrands = [];
+	$('#selected-brands').children().each(function () {
+		if ($(this).attr('data-id')) {
+			  selectedBrands.push($(this).attr('data-id'));
+		}
+	});
+	$('#brands').val(JSON.stringify(selectedBrands));
+});
+function removeBrand()
+{
+    $(this).parent().remove();
+    if ($('#selected-brands').children(':visible').length === 0) {
+    	$('#no-selected-brands').show();
+    }
+}
+$('input.typeahead').typeahead({
+	items: 9999,
+	ajax: {
+	    url: '<?php echo route(\null, array('action' => 'ajax-get-brands')); ?>',
+	    triggerLength: 2
+	},
+	onSelect: function (item) {
+		var sb = $('#selected-brands');
+		if (sb.find('[data-id="' + item.text + '"]').length === 0) {
+			$('#no-selected-brands').hide();
+		    sb.prepend('<div data-id="' + item.text + '">' + item.text + ' <span style="cursor: pointer; color: red;" onclick="removeBrand.call(this)">x</span></div>');
+		}
+		window.setTimeout(function () { $('input.typeahead').val(''); }, 10);
+    }
+});
+new chainedOneByOne({
+	defaultOpt : 'Избери',
+    allowDisable : true,
+    allowDisableColor: 'rgb(232, 232, 232)',
+    chained : [
+    	{
+        	el : '#continentId', to : {
+            	e : '#countryId',
+            	v : <?php echo json_encode($this->form->countryId->getValue()); ?>,
+        	    u : '<?php echo route(\null, array('action' => 'ajax-get-categories'), \false, \false); ?>',
+        	    cb : function () {
+        	    	$('#countryId').selectpicker('refresh');
+        	    }
+     	    }
+        }
+    ]
+});
+</script>
+<?php $this->stop(); ?>
+
+<?php $this->start('styles'); ?>
+<style>
+.typeahead.dropdown-menu {
+	max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+</style>
+<?php $this->stop(); ?>

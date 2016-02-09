@@ -1,0 +1,14 @@
+<?php
+
+$classes = $this->item->getClasses();
+
+if ($classes) {
+    $buff = array();
+    foreach (explode(',', $classes) as $class) {
+        if (isset($this->nomClassesCodes[$class])) {
+            $buff[] = $this->nomClassesCodes[$class];
+        }
+    }
+    asort($buff);
+    echo implode(', ', $buff);
+}

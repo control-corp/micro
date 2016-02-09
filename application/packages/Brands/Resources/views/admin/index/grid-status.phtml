@@ -1,0 +1,9 @@
+<?php
+if ($this->item->getStatusId()) :
+    $date = '';
+    if ($this->item->getStatusDate()) {
+        $date = new \DateTime($this->item->getStatusDate());
+        $date = '&nbsp;/<br />' . $date->format('d.m.Y');
+    }
+    echo $this->nomStatuses[$this->item->getStatusId()] . $date;
+endif;
