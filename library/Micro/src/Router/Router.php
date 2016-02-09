@@ -93,6 +93,7 @@ class Router implements ContainerAwareInterface
         }
 
         $route = new Route($name, $pattern, $handler);
+
         $route->setContainer($this->container);
 
         if (Route::isStatic($pattern)) {
@@ -145,7 +146,7 @@ class Router implements ContainerAwareInterface
 
             if ($basePath === \null) {
                 $uri = $request->getUri();
-                if (method_exists($uri, 'getBasePath')) {
+                if (\method_exists($uri, 'getBasePath')) {
                     $basePath = $request->getUri()->getBasePath();
                 } else {
                     $basePath = '/';
@@ -157,12 +158,14 @@ class Router implements ContainerAwareInterface
             }
         }
 
-        if ($qsa === \true && !empty($data)) {
+        if ($qsa === \true) {
 
-            $queryParams = $data + $queryParams;
+            $qp = $data + $queryParams;
 
-            if (!empty($queryParams)) {
-                $url .= '?' . \http_build_query($queryParams);
+            $qp = \array_filter($qp);
+
+            if (!empty($qp)) {
+                $url .= '?' . \http_build_query($qp);
             }
         }
 
@@ -293,7 +296,7 @@ class Router implements ContainerAwareInterface
                 $controller = \ucfirst(Utils::camelize($controller));
                 $action = \lcfirst(Utils::camelize($action));
 
-                return $cache[$hash] = $package . '\\Controller\Front\\' . $controller . '@' . $action;
+                return $cache[$hash] = $package . '\\Controller\\' . $controller . '@' . $action;
 
             }, 'default');
 

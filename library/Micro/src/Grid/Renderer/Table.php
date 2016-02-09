@@ -55,7 +55,7 @@ class Table implements RendererInterface
 
         $request = app('request');
         $requestParams = $request->getParams();
-        $requestParams = array_diff_key($requestParams, ($request->getParsedBody() ?: []));
+        $requestParams = array_diff_key($requestParams, ($request->getPost() ?: []));
 
         foreach ($requestParams as $key => $requestParam) {
             if (!is_array($requestParam)) {

@@ -63,7 +63,6 @@ class Application
     public function __construct(ContainerInterface $container, $useMiddleware = \true, $useEvent = \true)
     {
         $this->container = $container;
-
         $this->container->set('app', $this);
 
         $this->useMiddleware = $useMiddleware;
@@ -82,13 +81,17 @@ class Application
 
             $this->boot();
 
-            if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('application.start')) instanceof ServerRequestInterface) {
+            if ($this->useEvent === \true
+                && ($eventResponse = $this->container->get('event')->trigger('application.start')) instanceof ResponseInterface
+            ) {
                 $response = $eventResponse;
             } else {
                 $response = $this->dispatch();
             }
 
-            if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('application.end', ['response' => $response])) instanceof ResponseInterface) {
+            if ($this->useEvent === \true
+                && ($eventResponse = $this->container->get('event')->trigger('application.end', ['response' => $response])) instanceof ResponseInterface
+            ) {
                 $response = $eventResponse;
             }
 
@@ -112,13 +115,13 @@ class Application
      */
     public function add($middleware)
     {
-        if (is_string($middleware) && $this->container->has($middleware)) {
+        if (\is_string($middleware) && $this->container->has($middleware)) {
             $middleware = $this->container->get($middleware);
-        } elseif (is_string($middleware) && class_exists($middleware)) {
+        } elseif (\is_string($middleware) && \class_exists($middleware)) {
             $middleware = new $middleware;
         }
 
-        if (!is_callable($middleware)) {
+        if (!\is_callable($middleware)) {
             return $this;
         }
 
@@ -192,7 +195,7 @@ class Application
     {
         $router = $this->getRouter();
 
-        if ($this->container->get('config')->get('router.default_routes')) {
+        if ($this->container['config']['router.default_routes']) {
             $router->loadDefaultRoutes();
         }
 
@@ -204,11 +207,13 @@ class Application
             $request->withAttribute($k, $v);
         }
 
-        if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof ResponseInterface) {
+        if ($this->useEvent === \true
+            && ($eventResponse = $this->container->get('event')->trigger('route.end', ['route' => $route])) instanceof ResponseInterface
+        ) {
             return $eventResponse;
         }
 
-        if ($this->useMiddleware === \true && $route->stack !== \null) {
+        if ($this->useMiddleware === \true && $route->hasMiddleware()) {
             return $route->run($request, $response);
         } else {
             return $route->__invoke($request, $response);
@@ -357,6 +362,23 @@ class Application
     }
 
     /**
+     * @param string $package
+     * @return array|null
+     */
+    public function matchResolve($package)
+    {
+        if (!\is_string($package)) {
+            return \null;
+        }
+
+        if (\preg_match('~^([^\@]+)\@([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$~', $package, $matches)) {
+            return [$matches[1], $matches[2]];
+        }
+
+        return \null;
+    }
+
+    /**
      * @param mixed $package
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
@@ -366,22 +388,35 @@ class Application
      */
     public function resolve($package, ServerRequestInterface $request, ResponseInterface $response, $subRequest = \false)
     {
-        if (!\is_string($package) || \strpos($package, '@') === \false) {
+        if ($package instanceof ResponseInterface) {
+            return $package;
+        }
+
+        if (($matches = $this->matchResolve($package)) === \null) {
             throw new CoreException(\sprintf('Package [%s] must be in [Handler@action] format', (\is_object($package) ? \get_class($package) : $package)));
         }
 
-        list($package, $action) = explode('@', $package);
+        $package = $matches[0];
+        $action = $matches[1];
 
         if ($this->container->has($package)) {
+
             $packageInstance = $this->container->get($package);
+
             if (!\is_object($packageInstance)) {
                 throw new CoreException('Package "' . $package . '" is container service but it is not object', 500);
             }
+
+            $package = \get_class($packageInstance);
+
         } else {
+
             if (!\class_exists($package, \true)) {
                 throw new CoreException('Package class "' . $package . '" not found', 404);
             }
+
             $packageInstance = new $package($request, $response, $this->container);
+
             if ($packageInstance instanceof ContainerAwareInterface) {
                 $packageInstance->setContainer($this->container);
             }
@@ -420,6 +455,8 @@ class Application
             throw new CoreException('Package response is object and must be instance of View', 500);
         }
 
+        // resolve View object
+
         if ($packageResponse === \null || is_array($packageResponse)) {
 
             if ($packageInstance instanceof Controller) {
@@ -447,7 +484,9 @@ class Application
 
             }
 
-            if ($this->useEvent === \true && ($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface) {
+            if ($this->useEvent === \true
+                && ($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface
+            ) {
                 return $eventResponse;
             }
 

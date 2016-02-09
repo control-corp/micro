@@ -142,9 +142,9 @@ class Route implements ContainerAwareInterface
                     }
 
                     if ($matches[2][$k] === '[') {
-                        $compiled .= '(' . preg_quote($matches[3][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[5][$k]) . ')?';
+                        $compiled .= '(' . \preg_quote($matches[3][$k]) . '(?P<' . $param . '>' . $regex . ')' . \preg_quote($matches[5][$k]) . ')?';
                     } else {
-                        $compiled .= preg_quote($matches[3][$k]) . '(?P<' . $param . '>' . $regex . ')' . preg_quote($matches[5][$k]);
+                        $compiled .= \preg_quote($matches[3][$k]) . '(?P<' . $param . '>' . $regex . ')' . \preg_quote($matches[5][$k]);
                     }
 
                     $this->params[$param] = isset($this->defaults[$param]) ? $this->defaults[$param] : \null;
@@ -182,7 +182,7 @@ class Route implements ContainerAwareInterface
 
         $error = false;
 
-        if (preg_match_all(static::REGEX, $this->pattern, $matches)) {
+        if (\preg_match_all(static::REGEX, $this->pattern, $matches)) {
             foreach ($matches[4] as $k => $v) {
                 if (empty($v)) { // literal
                     $url .= $matches[1][$k];
@@ -348,6 +348,14 @@ class Route implements ContainerAwareInterface
     }
 
     /**
+     * @return boolean
+     */
+    public function hasMiddleware()
+    {
+        return !empty($this->middleware);
+    }
+
+    /**
      * Run route
      *
      * This method traverses the middleware stack, including the route's callable
@@ -402,13 +410,6 @@ class Route implements ContainerAwareInterface
 
         if ($handler instanceof ResponseInterface) {
             return $handler;
-        }
-
-        if (!\is_string($handler) || \strpos($handler, '@') === \false) {
-
-            $response->getBody()->write((string) $handler);
-
-            return $response;
         }
 
         $resolver = $this->container->get('resolver');

@@ -3,6 +3,7 @@
 namespace Micro\Translator\Adapter;
 
 use Micro\Translator\Language\LanguageInterface;
+use Micro\Container\SharedContainer;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
@@ -10,7 +11,7 @@ abstract class AdapterAbstract implements AdapterInterface
 
     public function translate($key, $code = \null)
     {
-        $container = app();
+        $container = SharedContainer::getInstance();
 
         if ($code === \null
             && $container->has('language')

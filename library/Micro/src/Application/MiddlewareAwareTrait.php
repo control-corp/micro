@@ -3,8 +3,6 @@
 namespace Micro\Application;
 
 use RuntimeException;
-use SplStack;
-use SplDoublyLinkedList;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use UnexpectedValueException;
@@ -17,10 +15,9 @@ trait MiddlewareAwareTrait
     /**
      * Middleware call stack
      *
-     * @var  \SplStack
-     * @link http://php.net/manual/class.splstack.php
+     * @var array
      */
-    public $stack;
+    protected $stack;
 
     /**
      * Middleware stack lock
@@ -53,7 +50,7 @@ trait MiddlewareAwareTrait
             $this->seedMiddlewareStack();
         }
 
-        $next = $this->stack->top();
+        $next = array_pop($this->stack);
 
         $this->stack[] = function (ServerRequestInterface $req, ResponseInterface $res) use ($callable, $next) {
 
@@ -78,21 +75,19 @@ trait MiddlewareAwareTrait
      *
      * @throws RuntimeException if the stack is seeded more than once
      */
-    protected function seedMiddlewareStack(callable $kernel = null)
+    protected function seedMiddlewareStack(callable $middleware = null)
     {
         if ($this->stack !== \null) {
             throw new RuntimeException('MiddlewareStack can only be seeded once.');
         }
 
-        if ($kernel === \null) {
-            $kernel = $this;
+        if ($middleware === \null) {
+            $middleware = $this;
         }
 
-        $this->stack = new \SplStack;
+        $this->stack = [$middleware];
 
-        $this->stack->setIteratorMode(SplDoublyLinkedList::IT_MODE_LIFO | SplDoublyLinkedList::IT_MODE_KEEP);
-
-        $this->stack[] = $kernel;
+        return $this;
     }
 
     /**
@@ -109,7 +104,7 @@ trait MiddlewareAwareTrait
             $this->seedMiddlewareStack();
         }
 
-        $start = $this->stack->top();
+        $start = array_pop($this->stack);
 
         $this->middlewareLock = \true;
 

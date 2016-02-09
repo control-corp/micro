@@ -32,9 +32,7 @@ class Crud extends Controller
             }
         }
 
-        $filters = $this->handleFilters();
-
-        if ($filters instanceof Response) {
+        if (($filters = $this->handleFilters()) instanceof Response) {
             return $filters;
         }
 
@@ -106,7 +104,7 @@ class Crud extends Controller
 
         if ($this->request->isPost()) {
 
-            $post = $this->request->getParsedBody();
+            $post = $this->request->getPost();
 
             if (isset($post['btnBack'])) {
                 return new RedirectResponse(route(\null, ['action' => 'index', 'id' => \null]));

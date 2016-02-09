@@ -5,13 +5,10 @@ namespace Micro\Application;
 use Exception as CoreException;
 use Micro\Http\Request;
 use Micro\Http\Response;
-use Micro\Container\ContainerAwareInterface;
-use Micro\Container\ContainerAwareTrait;
+use Micro\Container\ContainerInterface;
 
-class Controller implements ContainerAwareInterface
+class Controller
 {
-    use ContainerAwareTrait;
-
     /**
      * @var Request
      */
@@ -21,6 +18,11 @@ class Controller implements ContainerAwareInterface
      * @var Response
      */
     protected $response;
+
+    /**
+     * @var ContainerInterface
+     */
+    protected $container;
 
     /**
      * @var View
@@ -35,15 +37,15 @@ class Controller implements ContainerAwareInterface
     /**
      * @param Request $request
      * @param Response $response
-     * @param View $response
+     * @param ContainerInterface $container
      */
-    public function __construct(Request $request, Response $response, View $view = \null)
+    public function __construct(Request $request, Response $response, ContainerInterface $container)
     {
         $this->request = $request;
-
         $this->response = $response;
+        $this->container = $container;
 
-        $this->view = $view ?: new View();
+        $this->view = new View();
     }
 
     /**
