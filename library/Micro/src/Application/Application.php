@@ -209,9 +209,9 @@ class Application
         }
 
         if ($this->useMiddleware === \true && $route->stack !== \null) {
-            return $route->run($request, $response);
+            return $route->run($request, $response, $this->container);
         } else {
-            return $route->__invoke($request, $response);
+            return $route->__invoke($request, $response, $this->container);
         }
     }
 

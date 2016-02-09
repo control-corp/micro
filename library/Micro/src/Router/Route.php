@@ -4,14 +4,13 @@ namespace Micro\Router;
 
 use Micro\Exception\Exception as CoreException;
 use Micro\Application\MiddlewareAwareTrait;
-use Micro\Container\ContainerAwareInterface;
-use Micro\Container\ContainerAwareTrait;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Micro\Container\ContainerInterface;
 
-class Route implements ContainerAwareInterface
+class Route
 {
-    use ContainerAwareTrait, MiddlewareAwareTrait;
+    use MiddlewareAwareTrait;
 
     const REGEX = '~
         ([^{}\[\]]+)|
@@ -356,16 +355,17 @@ class Route implements ContainerAwareInterface
      *
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
+     * @param ContainerInterface $container
      * @return ResponseInterface
      */
-    public function run(ServerRequestInterface $request, ResponseInterface $response)
+    public function run(ServerRequestInterface $request, ResponseInterface $response, ContainerInterface $container)
     {
         if ($this->middlewareAreAdded === \false) {
 
             foreach ($this->middleware as $middleware) {
 
-                if (is_string($middleware) && $this->container->has($middleware)) {
-                    $middleware = $this->container->get($middleware);
+                if (is_string($middleware) && $container->has($middleware)) {
+                    $middleware = $container->get($middleware);
                 } elseif (is_string($middleware) && class_exists($middleware)) {
                     $middleware = new $middleware;
                 }
@@ -390,9 +390,10 @@ class Route implements ContainerAwareInterface
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
+     * @param ContainerInterface $container
      * @throws CoreException
      */
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response)
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, ContainerInterface $container)
     {
         $handler = $this->getHandler();
 
@@ -411,7 +412,7 @@ class Route implements ContainerAwareInterface
             return $response;
         }
 
-        $resolver = $this->container->get('resolver');
+        $resolver = $container->get('resolver');
 
         if (\is_object($resolver) && \method_exists($resolver, 'resolve')) {
             return $resolver->resolve($handler, $request, $response);
