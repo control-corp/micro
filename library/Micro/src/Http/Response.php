@@ -396,6 +396,13 @@ class Response extends Message implements ResponseInterface
         return $output;
     }
 
+    /**
+     * Set flash message
+     *
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @return Response
+     */
     public function withFlash($message = \null, $type = 'success')
     {
         \flash()->setMessage($message, $type);

@@ -506,7 +506,7 @@ class Request extends Message implements ServerRequestInterface
             return '/';
         }
 
-        $basePath = $this->uri->getBasePath();
+        $basePath = method_exists($this->uri, 'getBasePath') ? $this->uri->getBasePath() : '';
         $path = $this->uri->getPath();
         $path = $basePath . '/' . ltrim($path, '/');
 
