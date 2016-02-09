@@ -1,0 +1,22 @@
+<ol class="dd-list">
+<?php foreach ($this->items as $item) : ?>
+    <li class="dd-item dd3-item" data-id="<?php echo $item['id']; ?>">
+        <div class="dd-handle dd3-handle"></div>
+        <div class="dd3-content row">
+            <div class="col-md-8">
+                <a href="<?php echo route(\null, array('action' => 'add-item', 'id' => $item['id'])); ?>"><?php echo $item['name']; ?></a>
+            </div>
+            <div class="col-md-4 text-right">
+                <?php echo $item['alias']; ?>
+                <?php echo $item['active'] ? '<span class="fa fa-check"></span>' : '<span class="fa fa-ban"></span>'; ?>
+                <a href="<?php echo route(\null, array('action' => 'delete-item', 'id' => $item['id'])); ?>" class="remove glyphicon glyphicon-trash"> </a>
+            </div>
+        </div>
+    <?php
+    if (!empty($item['children'])) :
+        echo $this->partial('admin/index/_nestable', array('items' => $item['children']));
+    endif;
+    ?>
+    </li>
+<?php endforeach; ?>
+</ol>

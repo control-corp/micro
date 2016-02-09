@@ -1,0 +1,45 @@
+<?php if ($this->navigationHelper) : ?>
+<div class="form-group">
+    <div class="col-md-12 danger">
+        Resolver:
+        <?php
+        echo get_class($this->navigationHelper);
+        ?>
+    </div>
+</div>
+<?php endif; ?>
+<?php
+if (!empty($this->navigationData)) :
+    foreach ($this->navigationData as $variable) :
+?>
+    <div class="form-group">
+        <div class="col-md-12">
+            <label style="padding: 5px 0"><?php echo (isset($variable['label']) ? $variable['label'] : ucfirst($variable['field'])); ?></label>
+        <?php if (is_array($variable['value'])) : ?>
+            <select class="form-control" name="routeData[<?php echo $variable['field']; ?>]"><?php echo Micro\Application\Utils::buildOptions($variable['value'], (isset($this->routeData[$variable['field']]) ? $this->routeData[$variable['field']] : '')); ?></select>
+        <?php else: ?>
+            <input type="text" class="form-control" name="routeData[<?php echo $variable['field']; ?>]" value="<?php echo (isset($this->routeData[$variable['field']]) ? $this->routeData[$variable['field']] : ''); ?>" />
+        <?php endif; ?>
+        </div>
+    </div>
+    <?php echo (isset($variable['js']) ? $variable['js'] : ''); ?>
+<?php
+    endforeach;
+elseif ($this->route) :
+    $params = array_keys($this->route->getParams());
+    foreach ($params as $key) :
+    ?>
+    <div class="form-group">
+        <div class="col-md-12">
+            <label style="padding: 5px 0"><?php echo ucfirst($key); ?></label>
+            <input type="text" class="form-control" name="routeData[<?php echo $key; ?>]" value="<?php echo (isset($this->routeData[$key]) ? $this->routeData[$key] : ''); ?>" />
+        </div>
+    </div>
+    <?php endforeach; ?>
+<?php endif; ?>
+<div class="form-group">
+    <div class="col-md-12">
+        <label style="padding: 5px 0">QSA</label>
+        <input type="text" class="form-control" name="qsaData" value="<?php echo (isset($this->qsaData) ? $this->qsaData : ''); ?>" />
+    </div>
+</div>

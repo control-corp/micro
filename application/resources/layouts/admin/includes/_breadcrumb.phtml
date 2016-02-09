@@ -1,0 +1,33 @@
+<?php
+$found = [];
+foreach (Navigation\View\Navigation::getMenus() as $menu) {
+    $found = $menu->findAllBy('active', 1);
+    if (!empty($found)) {
+        break;
+    }
+}
+if (empty($found)) {
+    return;
+} else {
+    $found = end($found);
+    if ($found->getAlias() === 'admin.home') {
+        return;
+    }
+}
+$pages = [];
+$cnt = 0;
+$buff = '';
+do {
+    $pages[] = $found;
+    $found = $found->getParent();
+    $cnt++;
+} while ($found instanceof Micro\Navigation\Page\AbstractPage);
+foreach (array_reverse($pages) as $k => $page) {
+    if ($cnt > $k + 1) {
+        $buff .= '<li><a href="' . $page->getHref() . '">' . $page->getLabel() . '</a></li>';
+    } else {
+        $buff .= '<li class="active">' . $page->getLabel() . '</li>';
+    }
+}
+?>
+<ol class="breadcrumb"><li><a href="<?php echo route('admin', [], \true); ?>">Начало</a></li><?php echo $buff; ?></ol>

@@ -3,13 +3,13 @@
 return [
     'db' => [
         'default' => 'localhost',
-        'set_default_adapter' => false,
-        'set_default_cache' => false,
+        'set_default_adapter' => true,
+        'set_default_cache' => true,
         'adapters' => [
             'localhost' => [
                 'adapter'  => 'mysqli',
                 'host'     => 'localhost',
-                'dbname'   => 'micro',
+                'dbname'   => 'brands_micro',
                 'username' => 'root',
                 'password' => '',
                 'charset'  => 'utf8'

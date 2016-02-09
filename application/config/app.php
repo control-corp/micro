@@ -19,7 +19,7 @@ return [
     ],
     'log' => [
         'enabled' => 1,
-        'path' => 'data/log',
+        'path' => __DIR__ . '/../../data/log',
     ],
     'error' => [
         'default' => 'App\Error@index',

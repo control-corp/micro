@@ -1,0 +1,111 @@
+<?php
+
+$this->extend('layouts/admin/default');
+
+$label = ($this->item['id'] ? 'Редактиране' : 'Добавяне');
+
+$this->section('title', $label);
+
+$this->hookToMenu('main', 'control.navigation', $label);
+
+?>
+
+<form class="form-horizontal" action="<?php echo route(); ?>" method="post" enctype="multipart/form-data">
+    <div style="margin-bottom: 20px">
+        <?php echo $this->form->btnSave; ?>
+        <?php echo $this->form->btnApply; ?>
+        <?php echo $this->form->btnBack; ?>
+    </div>
+    <div class="row">
+        <div class="col-md-9">
+            <div class="panel panel-default">
+                <div class="panel-heading">&nbsp;</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-6">
+                            <?php echo $this->form->name->renderLabel(); ?>
+                            <?php echo $this->form->name; ?>
+                        </div>
+                        <div class="col-md-6">
+                            <?php echo $this->form->alias->renderLabel(); ?>
+                            <?php echo $this->form->alias; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->url->renderLabel(); ?>
+                            <?php echo $this->form->url; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-6">
+                            <?php echo $this->form->route->renderLabel(); ?>
+                            <?php echo $this->form->route; ?>
+                        </div>
+                    </div>
+                    <div id="routeData">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">&nbsp;</div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->active; ?>
+                            <?php echo $this->form->active->getLabel(); ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->reset; ?>
+                            <?php echo $this->form->reset->getLabel(); ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <?php echo $this->form->qsa; ?>
+                            <?php echo $this->form->qsa->getLabel(); ?>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <div class="col-md-12">
+                            <?php echo $this->form->parentId->renderLabel(); ?>
+                            <?php echo $this->form->parentId; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <?php echo $this->form->btnSave; ?>
+        <?php echo $this->form->btnApply; ?>
+        <?php echo $this->form->btnBack; ?>
+    </div>
+</form>
+<?php $this->start('scripts'); ?>
+<script>
+$('#route').on('change', function (e, routeData, qsaData) {
+	if ($.trim($(this).val()) === '') {
+	    $('#routeData').html('');
+	    return true;
+	}
+	if (typeof routeData === 'undefined') {
+		routeData = '[]';
+	}
+	if (typeof qsaData === 'undefined') {
+		qsaData = '';
+	}
+    $.post('<?php echo route(\null, array('action' => 'ajax-get-route-data')); ?>', {route: $(this).val(), routeData: routeData, qsaData: qsaData}, function (res) {
+        $('#routeData').html(res);
+    });
+});
+if ($('#route').val()) {
+	$('#route').trigger('change', ['<?php echo ($this->item->getRouteData() ? $this->item->getRouteData() : '[]'); ?>', '<?php echo $this->item->getQsaData(); ?>']);
+}
+</script>
+<?php $this->stop(); ?>

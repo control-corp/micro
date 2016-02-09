@@ -1,0 +1,42 @@
+<?php
+
+$label = $this->menu->getName();
+
+$this->extend('layouts/admin/default');
+
+$this->section('title', $label);
+
+$this->hookToMenu('main', 'control.navigation', $label);
+
+?>
+
+<h1><?php echo $label; ?></h1>
+
+<form action="<?php echo route(); ?>" method="post">
+    <div class="dd" id="nestable3">
+        <?php echo $this->partial('admin/index/_nestable', array('items' => $this->items)); ?>
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-success" name="btnAdd" value="Добавяне" />
+        <input type="submit" class="btn btn-default" name="btnBack" value="Назад" />
+    </div>
+</form>
+
+<?php $this->start('scripts'); ?>
+<script>
+var tree = $('#nestable3');
+tree.nestable();
+var oldData = JSON.stringify(tree.nestable('serialize'));
+tree.on('change', function() {
+	var data = JSON.stringify(tree.nestable('serialize'));
+	if (data === oldData) {
+		return;
+	}
+	tree.block();
+	$.post('<?php echo route(\null, array('action' => 'ajax-set-order')); ?>', {data: data}, function () {
+		tree.unblock();
+		oldData = data;
+	}, 'json');
+});
+</script>
+<?php $this->stop(); ?>

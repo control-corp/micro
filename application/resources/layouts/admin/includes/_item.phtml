@@ -1,0 +1,43 @@
+<?php
+$hasChildren = false;
+foreach ($this->item->getPages() as $child) {
+    if ($child->getVisible() && $child->isAllowed()) {
+        $hasChildren = true;
+        break;
+    }
+}
+if (!$this->item->getVisible() || !$this->item->isAllowed()) {
+    return;
+}
+$active = $this->item->isActive(true);
+?>
+<?php if ($this->level === 0) : ?>
+<li class="menu-item<?php echo $active ? ' active' : ''; ?><?php echo $hasChildren ? ' dropdown' : ''; ?>"><a<?php echo $hasChildren ? ' href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"' : ' href="' . $this->item->getHref() . '"'; ?>><?php echo $this->item->getLabel(); ?><?php echo ($hasChildren ? ' <span class="caret"></span>' : ''); ?></a>
+    <?php if ($hasChildren) : ?>
+    <ul class="dropdown-menu">
+        <?php
+        foreach ($this->item->getPages() as $child) :
+            echo $this->partial('layouts/admin/includes/_item', array('item' => $child, 'level' => ($this->level + 1)));
+        endforeach;
+        ?>
+    </ul>
+    <?php endif; ?>
+</li>
+<?php else : ?>
+    <?php if ($hasChildren) : ?>
+    <li class="dropdown-submenu menu-item<?php echo $active ? ' active' : ''; ?>">
+        <a href="<?php echo $this->item->getHref(); ?>"><?php echo $this->item->getLabel(); ?></a>
+        <?php if ($hasChildren) : ?>
+        <ul class="dropdown-menu">
+        <?php
+        foreach ($this->item->getPages() as $child) :
+            echo $this->partial('layouts/admin/includes/_item', array('item' => $child, 'level' => ($this->level + 1)));
+        endforeach;
+        ?>
+        </ul>
+        <?php endif; ?>
+    </li>
+    <?php else: ?>
+    <li class="menu-item<?php echo $active ? ' active' : ''; ?>"><a href="<?php echo $this->item->getHref(); ?>"><?php echo $this->item->getLabel(); ?></a></li>
+    <?php endif; ?>
+<?php endif; ?>

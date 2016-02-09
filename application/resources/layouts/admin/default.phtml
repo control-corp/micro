@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="<?php echo server_url(base_url()) . '/'; ?>" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?php echo $this->renderSection('title', 'Начало'); ?></title>
+    <link rel="stylesheet" href="assets/templates/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/templates/bootstrap/extends/datepicker/css/bootstrap-datepicker3.standalone.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/templates/bootstrap/extends/font-awesome-4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/templates/bootstrap/extends/summernote/summernote.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/templates/bootstrap/extends/select/css/bootstrap-select.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/templates/bootstrap/css/custom.css" rel="stylesheet">
+    <?php echo $this->renderSection('styles'); ?>
+</head>
+<body role="document">
+    <?php echo $this->render('layouts/admin/includes/_menu'); ?>
+    <div class="container-fluid">
+        <?php echo $this->render('layouts/admin/includes/_breadcrumb'); ?>
+        <?php echo $this->render('layouts/admin/includes/_flash'); ?>
+        <?php echo $this->renderSection('content'); ?>
+    </div>
+    <footer class="footer">
+        <div class="container">
+            <p class="text-muted">Copyright © <?php echo date('Y'); ?></p>
+        </div>
+    </footer>
+    <script>var siteLanguage = {code: 'bg'}; </script>
+    <script>var siteConfig = <?php echo json_encode(config('config.js', [])); ?>; </script>
+    <script type="text/javascript" src="assets/js/jquery/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="assets/js/jquery/jquery.migrate.1.2.1.min.js"></script>
+    <script type="text/javascript" src="assets/js/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/js/bootbox.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/extends/datepicker/js/bootstrap-datepicker.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/extends/datepicker/locales/bootstrap-datepicker.bg.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/extends/summernote/summernote.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/extends/summernote/lang/bg-BG.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/extends/select/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/extends/select/js/i18n/defaults-bg_BG.min.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/js/main.js"></script>
+    <script type="text/javascript" src="assets/templates/bootstrap/js/chainedOneByOne.js"></script>
+    <script type="text/javascript" src="assets/js/jquery/jquery.blockui.js"></script>
+    <script type="text/javascript" src="assets/js/jquery/jquery.nestable.js"></script>
+    <?php echo $this->renderSection('scripts'); ?>
+</body>
+</html>

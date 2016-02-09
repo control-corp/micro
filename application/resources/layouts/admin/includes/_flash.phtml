@@ -1,0 +1,5 @@
+<div class="flash">
+<?php foreach (flash()->getMessages() as $message) : ?>
+    <div class="alert alert-dismissible alert-<?php echo $message['type']; ?>" role="alert"><?php echo $message['message']; ?></div>
+<?php endforeach; ?>
+</div>

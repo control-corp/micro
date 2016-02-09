@@ -1,0 +1,52 @@
+<nav class="row">
+    <div class="col-md-4 text-left" style="padding: 15px 15px"><?php echo $this->pages->totalItemCount; ?> запис (a)</div>
+<?php if (true || $this->pages->pageCount > 1) : ?>
+    <div class="col-md-8 text-right">
+        <ul class="pagination" style="margin: 0 0 10px 0;">
+        <?php if (isset($this->pages->first) && $this->pages->current > 1) : ?>
+            <li>
+                <a href="<?php echo route(\null, array('page' => $this->pages->first)); ?>" aria-label="First"><span aria-hidden="true">&laquo;&laquo;</span></a>
+            </li>
+        <?php else : ?>
+            <li class="disabled">
+                <span><span aria-hidden="true">&laquo;&laquo;</span></span>
+            </li>
+        <?php endif; ?>
+        <?php if (!isset($this->pages->previous)) : ?>
+            <li class="disabled">
+                <span><span aria-hidden="true">&laquo;</span></span>
+            </li>
+        <?php else : ?>
+            <li>
+                <a href="<?php echo route(\null, array('page' => $this->pages->previous)); ?>" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+            </li>
+        <?php endif; ?>
+        <?php foreach ($this->pages->pagesInRange as $page) : ?>
+            <?php if ($page == $this->pages->current) : ?>
+                <li class="active"><span><?php echo $page; ?> <span class="sr-only">(current)</span></span></li>
+            <?php else : ?>
+                <li><a href="<?php echo route(\null, array('page' => $page)); ?>"><?php echo $page; ?></a></li>
+            <?php endif; ?>
+        <?php endforeach; ?>
+        <?php if (!isset($this->pages->next)) : ?>
+            <li class="disabled">
+                <span><span aria-hidden="true">&raquo;</span></span>
+            </li>
+        <?php else : ?>
+            <li>
+                <a href="<?php echo route(\null, array('page' => $this->pages->next)); ?>" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+            </li>
+        <?php endif; ?>
+        <?php if (isset($this->pages->last) && $this->pages->current < $this->pages->lastPageInRange) : ?>
+            <li>
+                <a href="<?php echo route(\null, array('page' => $this->pages->last)); ?>" aria-label="Last"><span aria-hidden="true">&raquo;&raquo;</span></a>
+            </li>
+        <?php else : ?>
+            <li class="disabled">
+                <span><span aria-hidden="true">&raquo;&raquo;</span></span>
+            </li>
+        <?php endif; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+</nav>
