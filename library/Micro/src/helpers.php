@@ -219,6 +219,10 @@ if (!function_exists('current_package')) {
 
         $resource = $route->getHandler();
 
+        if ($resource instanceof \Closure) {
+            $resource = $resource(app('request'), app('response'));
+        }
+
         if (!is_string($resource)) {
             return \null;
         }
@@ -262,6 +266,10 @@ if (!function_exists('is_allowed')) {
             }
 
             $resource = $route->getHandler();
+
+            if ($resource instanceof \Closure) {
+                $resource = $resource(app('request'), app('response'));
+            }
 
             if (!is_string($resource)) {
                 return \true;

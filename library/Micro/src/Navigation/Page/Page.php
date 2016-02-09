@@ -71,7 +71,7 @@ class Page extends AbstractPage
 
             $pageRoute = $router->getRoute($this->route);
 
-            $myParams = $this->routeParams + ($pageRoute ? $pageRoute->getDefaults() : []);
+            $myParams  = $this->routeParams + ($pageRoute ? $pageRoute->getDefaults() : []);
 
             foreach ($myParams as $key => $value) {
                 if (\null === $value) {
@@ -173,6 +173,10 @@ class Page extends AbstractPage
         $route->setParams($this->routeParams);
 
         $resource = $route->getHandler();
+
+        if ($resource instanceof \Closure) {
+            $resource = $resource(app('request'), app('response'));
+        }
 
         if (!\is_string($resource) || \is_allowed($resource, $role)) {
             return \true;

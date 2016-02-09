@@ -6,6 +6,8 @@ use Micro\Exception\Exception as CoreException;
 use Micro\Application\Utils;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class Router implements ContainerAwareInterface
 {
@@ -244,9 +246,14 @@ class Router implements ContainerAwareInterface
     {
         if (!isset($this->routes['admin'])) {
 
-            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function ($package, $controller, $action, $id) {
+            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function (ServerRequestInterface $request, ResponseInterface $response) {
 
                 static $cache = [];
+
+                $package = $request->getAttribute('package');
+                $controller = $request->getAttribute('controller');
+                $action = $request->getAttribute('action');
+                $id = $request->getAttribute('id');
 
                 $hash = 'admin_' . $package . '_' . $controller . '_' . $action . '_' . $id;
 
@@ -267,9 +274,14 @@ class Router implements ContainerAwareInterface
 
         if (!isset($this->routes['default'])) {
 
-            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function ($package, $controller, $action, $id) {
+            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function (ServerRequestInterface $request, ResponseInterface $response) {
 
                 static $cache = [];
+
+                $package = $request->getAttribute('package');
+                $controller = $request->getAttribute('controller');
+                $action = $request->getAttribute('action');
+                $id = $request->getAttribute('id');
 
                 $hash = 'front_' . $package . '_' . $controller . '_' . $action . '_' . $id;
 

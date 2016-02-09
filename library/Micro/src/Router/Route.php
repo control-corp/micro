@@ -220,12 +220,8 @@ class Route implements ContainerAwareInterface
     /**
      * @return \Closure|string
      */
-    public function getHandler($invoke = \true)
+    public function getHandler()
     {
-        if ($invoke === \true && $this->handler instanceof \Closure) {
-            return call_user_func_array($this->handler, $this->params);
-        }
-
         return $this->handler;
     }
 
@@ -399,6 +395,10 @@ class Route implements ContainerAwareInterface
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response)
     {
         $handler = $this->getHandler();
+
+        if ($handler instanceof \Closure) {
+            $handler = $handler($request, $response);
+        }
 
         if ($handler instanceof ResponseInterface) {
             return $handler;
