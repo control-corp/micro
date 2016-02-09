@@ -220,7 +220,7 @@ if (!function_exists('current_package')) {
         $resource = $route->getHandler();
 
         if ($resource instanceof \Closure) {
-            $resource = $resource(app('request'), app('response'));
+            $resource = $resource(app('request'), app('response'), SharedContainer::getInstance());
         }
 
         if (!is_string($resource)) {
@@ -268,7 +268,7 @@ if (!function_exists('is_allowed')) {
             $resource = $route->getHandler();
 
             if ($resource instanceof \Closure) {
-                $resource = $resource(app('request'), app('response'));
+                $resource = $resource(app('request'), app('response'), SharedContainer::getInstance());
             }
 
             if (!is_string($resource)) {

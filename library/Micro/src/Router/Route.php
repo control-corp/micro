@@ -398,7 +398,7 @@ class Route
         $handler = $this->getHandler();
 
         if ($handler instanceof \Closure) {
-            $handler = $handler($request, $response);
+            $handler = $handler($request, $response, $container);
         }
 
         if ($handler instanceof ResponseInterface) {
