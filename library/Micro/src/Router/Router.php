@@ -93,6 +93,7 @@ class Router implements ContainerAwareInterface
         }
 
         $route = new Route($name, $pattern, $handler);
+        $route->setContainer($this->container);
 
         if (Route::isStatic($pattern)) {
             if (isset($this->routesStatic[$pattern])) {

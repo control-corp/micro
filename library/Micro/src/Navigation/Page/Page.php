@@ -3,7 +3,6 @@
 namespace Micro\Navigation\Page;
 
 use Micro\Router\Route;
-use Micro\Container\SharedContainer;
 
 class Page extends AbstractPage
 {
@@ -176,7 +175,7 @@ class Page extends AbstractPage
         $resource = $route->getHandler();
 
         if ($resource instanceof \Closure) {
-            $resource = $resource(app('request'), app('response'), SharedContainer::getInstance());
+            $resource = $resource(app('request'), app('response'));
         }
 
         if (!\is_string($resource) || \is_allowed($resource, $role)) {
