@@ -10,7 +10,6 @@ class TempStream extends Stream
 
         if (!empty($data)) {
             $this->write($data);
-            $this->rewind();
         }
     }
 }

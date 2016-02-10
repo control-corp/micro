@@ -1,15 +1,5 @@
 <?php
 
-if (!function_exists('toDate')) {
-    function toDate($value, $format) {
-        if (empty($value)) {
-            return null;
-        }
-        $value = new \DateTime($value);
-        return $value->format($format);
-    }
-}
-
 return array(
     'paginatorPlacement' => 'both',
     'columns' => array(

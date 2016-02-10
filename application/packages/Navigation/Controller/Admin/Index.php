@@ -10,7 +10,6 @@ use Micro\Model\EntityInterface;
 use Micro\Http\Response\RedirectResponse;
 use Micro\Application\Utils;
 use Micro\Http\Response\JsonResponse;
-use Micro\Application\Application;
 
 class Index extends Crud
 {

@@ -1,15 +1,5 @@
 <?php
 
-if (!function_exists('toDate')) {
-    function toDate($value, $format) {
-        if (empty($value)) {
-            return null;
-        }
-        $value = new \DateTime($value);
-        return $value->format($format);
-    }
-}
-
 return array(
     'paginatorPlacement' => 'both',
     'buttons' => [
@@ -101,7 +91,7 @@ return array(
                 'title' => 'Дата на заявяване',
                 'sortable' => 1,
                 'filter' => array(
-                    'callback' => 'toDate',
+                    'callback' => 'to_date',
                     'params'   => array('format' => 'd.m.Y')
                 )
             )
@@ -119,7 +109,7 @@ return array(
                 'title' => 'Дата на регистрация',
                 'sortable' => 1,
                 'filter' => array(
-                    'callback' => 'toDate',
+                    'callback' => 'to_date',
                     'params'   => array('format' => 'd.m.Y')
                 )
             )

@@ -372,3 +372,13 @@ if (!function_exists('str_slug')) {
         return $cache[$origin] = $string;
     }
 }
+
+if (!function_exists('to_date')) {
+    function to_date($value, $format = 'Y-m-d') {
+        if (empty($value)) {
+            return null;
+        }
+        $value = new \DateTime($value);
+        return $value->format($format);
+    }
+}
