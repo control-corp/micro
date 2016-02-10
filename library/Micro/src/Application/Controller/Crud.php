@@ -44,12 +44,20 @@ class Crud extends Controller
 
         $model->addFilters($filters);
 
+        // hook
         $this->modifyModel($filters);
 
         $ipp = max($this->ipp, $this->request->getParam('ipp', $this->ipp));
         $page = max(1, $this->request->getParam('page', 1));
-        $orderField = $this->request->getParam('orderField', $model->getIdentifier());
-        $orderDir = strtoupper($this->request->getParam('orderDir', 'desc'));
+        $sort = $this->request->getParam('sort', $model->getIdentifier() . '_DESC');
+
+        $sortParts = explode('_', $sort);
+
+        $orderField = array_shift($sortParts);
+        $orderField = $orderField ?: $model->getIdentifier();
+
+        $orderDir = array_shift($sortParts);
+        $orderDir = $orderDir ? strtoupper($orderDir) : 'DESC';
 
         $model->addOrder($orderField, $orderDir);
 
@@ -100,6 +108,7 @@ class Crud extends Controller
 
         $form->populate($entity->toArray());
 
+        // hook
         $this->prepareForm($form, $entity);
 
         if ($this->request->isPost()) {
@@ -112,12 +121,15 @@ class Crud extends Controller
 
             $post = Utils::arrayMapRecursive('trim', $post);
 
+            // hook
             $this->modifyPost($form, $entity, $post);
 
+            // hook
             $this->preValidate($form, $entity, $post);
 
             $form->isValid($post);
 
+            // hook
             $this->postValidate($form, $entity, $post);
 
             if (!$form->hasErrors()) {
@@ -130,10 +142,12 @@ class Crud extends Controller
 
                     $post = Utils::arrayMapRecursive('trim', $post, true);
 
+                    // hook
                     $this->modifyData($post);
 
                     $entity->setFromArray($post);
 
+                    // hook
                     $this->modifyEntity($entity);
 
                     $model->save($entity);
@@ -317,7 +331,7 @@ class Crud extends Controller
      * @param string $key
      * @return \Micro\Http\Response\RedirectResponse|array
      */
-    protected function handleFilters($key = 'filters', $clearParams = ['id' => \null, 'page' => \null, 'orderDir' => \null, 'orderField' => \null])
+    protected function handleFilters($key = 'filters', $clearParams = ['id' => \null, 'page' => \null, 'sort' => \null])
     {
         $filters = $this->request->getParam($key);
 

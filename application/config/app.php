@@ -2,7 +2,7 @@
 
 return [
     'middleware' => [
-        App\Middleware\Test::class
+        //App\Middleware\Test::class
     ],
     'micro_debug' => [
         'handlers' => [

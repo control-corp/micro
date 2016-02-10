@@ -69,9 +69,7 @@ class Container implements ContainerInterface
 
         // call resolved
         if (isset($this->resolved[$service])) {
-            return $this->resolved[$service] === \false
-                   ? \null
-                   : $this->resolved[$service];
+            return $this->resolved[$service] === \false ? \null : $this->resolved[$service];
         }
 
         if (!isset($this->services[$service])
@@ -79,8 +77,14 @@ class Container implements ContainerInterface
             && !isset($this->ranBinders[$this->bindings[$service]])
             && $this->binder !== \null
         ) {
-            $this->binder->{$method = $this->bindings[$service]}();
-            $this->ranBinders[$method] = \true;
+
+            $this->ranBinders[$method = $this->bindings[$service]] = \true;
+
+            $this->binder->$method();
+
+            if (isset($this->resolved[$service])) {
+                return $this->resolved[$service] === \false ? \null : $this->resolved[$service];
+            }
         }
 
         if (!isset($this->services[$service])) {
@@ -105,9 +109,7 @@ class Container implements ContainerInterface
             $result = $result->create($this, $service);
         }
 
-        $this->resolved[$service] = $result === \null
-                                    ? \false
-                                    : $result;
+        $this->resolved[$service] = $result === \null ? \false : $result;
 
         return $result;
     }

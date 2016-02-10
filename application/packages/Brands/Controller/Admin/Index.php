@@ -63,7 +63,7 @@ class Index extends Crud
 
             $model->addOrder(new Expr('IF(reNewDate IS NOT NULL AND (TIMESTAMPDIFF(MONTH, "' . $now . '", reNewDate) + 1) <= 3, 1, 0) DESC'));
 
-            $model->addOrder(new Expr('reNewDate ASC'));
+            $model->addOrder('reNewDate', 'ASC');
         }
 
         if (isset($filters['months']) && $filters['months']) {

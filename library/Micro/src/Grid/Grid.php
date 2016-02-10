@@ -21,7 +21,7 @@ class Grid
 
     protected $gridClass;
 
-    protected $paginationViewScript = 'paginator';
+    protected $paginationViewScript = 'paginator/default';
 
     protected $paginatorAlways = \true;
 

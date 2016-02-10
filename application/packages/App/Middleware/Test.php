@@ -7,10 +7,15 @@ use Psr\Http\Message\ResponseInterface;
 use Micro\Application\View;
 use Micro\Event\Message;
 use Micro\Http\Response\HtmlResponse;
-use Micro\Http\Stream;
+use Micro\Database\Adapter\AdapterAbstract;
+use Micro\Http\TempStream;
+use Micro\Database\Profiler;
 
 class Test
 {
+    /**
+     * @var View
+     */
     protected $view;
 
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, $next)
@@ -28,21 +33,19 @@ class Test
     {
         if (\config('micro_debug.handlers.dev_tools')) {
 
-            \app('event')->attach('render.start', function (Message $message) {
-                $view = $message->getParam('view');
-                $view->section('styles', (string) $this->view->partial('css'));
+            $view = $this->view = new View('debug');
+            $view->addPath(package_path('App', 'Resources'));
+
+            \app('event')->attach('render.start', function (Message $message) use ($view) {
+                $message->getParam('view')->section('styles', (string) $view->partial('css'));
             });
-
-            $this->view = new View('debug');
-
-            $this->view->addPath(package_path('App', 'Resources'));
         }
 
-        if (\config('micro_debug.handlers.fire_php')) {
-
-            $db = \app('db');
-
-            if ($db) {
+        if (\config('micro_debug.handlers.fire_php') && ($db = \app('db')) instanceof AdapterAbstract) {
+            $profiler = $db->getProfiler();
+            if ($profiler instanceof Profiler) {
+                $profiler->setEnabled(\true);
+            } else {
                 $db->setProfiler(\true);
             }
         }
@@ -64,11 +67,7 @@ class Test
                 $b = explode('</body>', $b);
                 $b[0] .= str_replace(array("\n", "\t", "\r"), "", $this->view->render()) . '</body>';
 
-                $body = new Stream(fopen('php://temp', 'r+'));
-                $body->write(implode('', $b));
-                $body->rewind();
-
-                $response->withBody($body);
+                $response->withBody(new TempStream(implode('', $b)));
             }
         }
 

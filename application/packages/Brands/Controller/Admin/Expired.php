@@ -58,9 +58,7 @@ class Expired extends Crud
 
         if ($this->request->getParam('orderField') === null) {
 
-            $this->request->setParam('orderField', 'reNewDate');
-
-            $this->request->setParam('orderDir', 'ASC');
+            $this->request->withAttribute('sort', 'reNewDate_asc');
         }
     }
 }

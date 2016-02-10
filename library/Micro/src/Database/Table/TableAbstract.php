@@ -6,6 +6,7 @@ use Micro\Database\Adapter\AdapterAbstract;
 use Micro\Database\Adapter\Pdo\Pgsql;
 use Micro\Database\Database;
 use Micro\Cache;
+use Micro\Container\SharedContainer;
 
 abstract class TableAbstract
 {
@@ -650,6 +651,14 @@ abstract class TableAbstract
     {
         if (!$this->_db) {
             $this->_db = self::getDefaultAdapter();
+            if ($this->_db === \null) {
+                try {
+                    SharedContainer::getInstance()->get('db');
+                    $this->_db = self::getDefaultAdapter();
+                } catch (\Exception $e) {
+
+                }
+            }
             if (!$this->_db instanceof AdapterAbstract) {
                 throw new Exception('No adapter found for ' . get_class($this));
             }

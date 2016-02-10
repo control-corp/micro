@@ -22,6 +22,10 @@ class SharedContainer
      */
     public static function getInstance()
     {
+        if (static::$instance === \null) {
+            static::$instance = new Container();
+        }
+
         return static::$instance;
     }
 }

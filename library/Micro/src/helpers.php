@@ -301,7 +301,7 @@ if (!function_exists('widget')) {
 }
 
 if (!function_exists('pagination')) {
-    function pagination(Paginator $paginator, $partial = 'paginator', array $params = \null, View $view = \null)
+    function pagination(Paginator $paginator, $partial, array $params = \null, View $view = \null)
     {
         $pages = ['pages' => $paginator->getPages()];
 

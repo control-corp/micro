@@ -393,6 +393,14 @@ class Application
         }
 
         if (($matches = $this->matchResolve($package)) === \null) {
+
+            if (\is_string($package) || (\is_object($package) && \method_exists($package, '__toString'))) {
+
+                $response->getBody()->write((string) $package);
+
+                return $response;
+            }
+
             throw new CoreException(\sprintf('Package [%s] must be in [Handler@action] format', (\is_object($package) ? \get_class($package) : $package)));
         }
 

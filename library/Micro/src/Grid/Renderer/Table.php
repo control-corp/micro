@@ -31,7 +31,7 @@ class Table implements RendererInterface
             try {
                 $this->view->injectPaths((array) package_path(current_package(), 'Resources/views'));
             } catch (\Exception $e) {
-                app()->collectException($e);
+                app('app')->collectException($e);
             }
         }
 
@@ -113,8 +113,7 @@ class Table implements RendererInterface
                     $sortedClass = 'sorting_' . $column->getSorted();
                 }
 
-                $routeParams = array_merge($requestParams, ['orderField' => $column->getName(),
-                                                            'orderDir'   => ($column->getSorted() == 'asc') ? 'desc' : 'asc']);
+                $routeParams = array_merge($requestParams, ['sort' => $column->getName() . '_' . ($column->getSorted() == 'asc' ? 'desc' : 'asc')]);
 
                 $title = '<div class="' . $sortedClass . '" data-url="' . $this->router->assemble(\null, $routeParams) . '">' . $column->getTitle() . '</div>';
             } else {
