@@ -97,16 +97,16 @@ class Container implements ContainerInterface
             $result = $result($this);
         }
 
-        if (is_string($result) && class_exists($result)) {
+        if (\is_string($result) && \class_exists($result, \true)) {
             $result = new $result;
-        }
-
-        if ($result instanceof ContainerAwareInterface) {
-            $result->setContainer($this);
         }
 
         if ($result instanceof ContainerFactoryInterface) {
             $result = $result->create($this, $service);
+        }
+
+        if ($result instanceof ContainerAwareInterface) {
+            $result->setContainer($this);
         }
 
         $this->resolved[$service] = $result === \null ? \false : $result;

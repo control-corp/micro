@@ -606,13 +606,6 @@ class Application
         }
     }
 
-    public function registerEventBinder()
-    {
-        $this->container->set('event', function () {
-            return new Event\Manager();
-        }, \false);
-    }
-
     public function registerServices()
     {
         $config = $this->container->get('config');
@@ -627,6 +620,10 @@ class Application
 
         $this->container->set('router', function () {
             return new Router();
+        }, \false);
+
+        $this->container->set('event', function () {
+            return new Event\Manager();
         }, \false);
 
         $this->container->set('logger', function () use ($config) {
@@ -650,7 +647,6 @@ class Application
         }
 
         $this->container->setBindings($this, [
-            'event' => 'registerEventBinder',
             'resolver' => 'registerResolverBinder',
             'exception.handler' => 'registerExceptionBinder',
             'translator' => 'registerTranslatorBinder',
