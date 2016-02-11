@@ -147,39 +147,6 @@ class Container implements ContainerInterface
     }
 
     /**
-     * @param string $offset
-     * @param callable $callback
-     * @throws \InvalidArgumentException
-     * @return mixed
-     */
-    public function extend($offset, $callback)
-    {
-        if (isset($this->aliases[$service])) {
-            $service = $this->resolveAlias($service);
-        }
-
-        if (isset($this->resolved[$offset])) {
-            throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" is resolved!', $offset), 500);
-        }
-
-        if (!isset($this->services[$offset])) {
-            throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" not found!', $offset), 500);
-        }
-
-        if (!is_object($callback) || !method_exists($callback, '__invoke')) {
-            throw new \InvalidArgumentException('[' . __METHOD__ . '] Provided callback must be \Closure or implements __invoke!', 500);
-        }
-
-        $service = $this->services[$offset];
-
-        $extended = function ($c) use ($service, $callback) {
-            return $callback($service($c), $c);
-        };
-
-        return $this->set($offset, $extended);
-    }
-
-    /**
      * @param string $alias
      * @param string $service
      * @return Container
