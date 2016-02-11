@@ -18,7 +18,7 @@ return [
         'enabled' => false
     ],
     'log' => [
-        'enabled' => 1,
+        'enabled' => 0,
         'path' => __DIR__ . '/../../data/log',
     ],
     'error' => [

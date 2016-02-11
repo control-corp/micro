@@ -58,11 +58,6 @@ class Route implements ContainerAwareInterface
     protected $params = [];
 
     /**
-     * @var array
-     */
-    protected $middleware = [];
-
-    /**
      * @var boolean
      */
     protected $middlewareAreAdded = \false;
@@ -331,68 +326,6 @@ class Route implements ContainerAwareInterface
     public function getName()
     {
         return $this->name;
-    }
-
-    /**
-     * Prepend middleware to the middleware collection
-     *
-     * @param mixed $callable The callback routine
-     *
-     * @return Route
-     */
-    public function add($callable)
-    {
-        $this->middleware[] = $callable;
-
-        return $this;
-    }
-
-    /**
-     * @return boolean
-     */
-    public function hasMiddleware()
-    {
-        return !empty($this->middleware);
-    }
-
-    /**
-     * Run route
-     *
-     * This method traverses the middleware stack, including the route's callable
-     * and captures the resultant HTTP response object. It then sends the response
-     * back to the Application.
-     *
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @return ResponseInterface
-     */
-    public function run(ServerRequestInterface $request, ResponseInterface $response)
-    {
-        if ($this->middlewareAreAdded === \false) {
-
-            foreach ($this->middleware as $middleware) {
-
-                if (is_string($middleware) && $this->container->has($middleware)) {
-                    $middleware = $this->container->get($middleware);
-                } elseif (is_string($middleware) && class_exists($middleware)) {
-                    $middleware = new $middleware;
-                }
-
-                if (!is_callable($middleware)) {
-                    continue;
-                }
-
-                $this->addMiddleware($middleware);
-            }
-
-            $this->middlewareAreAdded = \true;
-        }
-
-        if ($this->stack !== \null) {
-            return $this->callMiddlewareStack($request, $response);
-        } else {
-            return $this->__invoke($request, $response);
-        }
     }
 
     /**

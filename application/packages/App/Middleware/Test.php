@@ -24,9 +24,7 @@ class Test
 
         $response = $next($request, $response);
 
-        $this->after($response);
-
-        return $response;
+        return $this->after($response);
     }
 
     public function before()
@@ -119,5 +117,7 @@ class Test
 
             \file_put_contents($fileForCache, "<?php\nreturn " . \var_export($forStore, \true) . ";", \LOCK_EX);
         }
+
+        return $response;
     }
 }

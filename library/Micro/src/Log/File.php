@@ -2,26 +2,28 @@
 
 namespace Micro\Log;
 
-use Micro\Container\ContainerAwareInterface;
-use Micro\Container\ContainerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\AbstractLogger;
 
-class File extends AbstractLogger implements LoggerInterface, ContainerAwareInterface
+class File extends AbstractLogger implements LoggerInterface
 {
-    use ContainerAwareTrait;
+    private $enabled;
+    private $path;
 
-    public function log($level, $message, array $context = array())
+    public function __construct(array $options = \null)
     {
-        $config = $this->container->get('config');
-
-        if (!$config->get('log.enabled')) {
-            return;
+        if (isset($options['enabled'])) {
+            $this->enabled = (bool) $options['enabled'];
         }
 
-        $path = $config->get('log.path');
+        if (isset($options['path'])) {
+            $this->path = $options['path'];
+        }
+    }
 
-        if (!$path) {
+    public function log($level, $message, array $context = [])
+    {
+        if (!$this->enabled || !$this->path) {
             return;
         }
 
@@ -42,12 +44,12 @@ class File extends AbstractLogger implements LoggerInterface, ContainerAwareInte
         $extra = '';
 
         foreach ($context as $k => $v) {
-            if (is_int($k)) {
+            if (\is_int($k)) {
                 continue;
             }
-            $extra .= " - " . $k . " [" . (is_object($v) || is_array($v) ? json_encode($v) : $v) . "]";
+            $extra .= " - " . $k . " [" . (\is_object($v) || \is_array($v) ? \json_encode($v) : $v) . "]";
         }
 
-        \file_put_contents(\rtrim($path, '/') . '/' . $type . '.txt', '[' . \date('d M Y (h:m:i)') . '] "' . $message . '"' . $extra . "\n", \FILE_APPEND | \LOCK_EX);
+        \file_put_contents(\rtrim($this->path, '/') . '/' . $type . '.txt', '[' . \date('d M Y (h:m:i)') . '] "' . $message . '"' . $extra . "\n", \FILE_APPEND | \LOCK_EX);
     }
 }

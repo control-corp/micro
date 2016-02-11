@@ -13,13 +13,13 @@ use Micro\Database\Table\TableAbstract;
 use Micro\Cache\Cache;
 use Micro\Translator\Translator;
 use Micro\Session\Session;
-use Micro\Log\ErrorHandler;
 use Micro\Log\File as FileLog;
 use Micro\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Micro\Http\Request;
 use Micro\Http\Response\HtmlResponse;
+use Micro\Router\Route;
 
 class Application
 {
@@ -105,30 +105,6 @@ class Application
     }
 
     /**
-     * Add middleware
-     *
-     * This method prepends new middleware to the app's middleware stack.
-     *
-     * @param  mixed    $middleware The callback routine
-     *
-     * @return static
-     */
-    public function add($middleware)
-    {
-        if (\is_string($middleware) && $this->container->has($middleware)) {
-            $middleware = $this->container->get($middleware);
-        } elseif (\is_string($middleware) && \class_exists($middleware)) {
-            $middleware = new $middleware;
-        }
-
-        if (!\is_callable($middleware)) {
-            return $this;
-        }
-
-        return $this->addMiddleware($middleware);
-    }
-
-    /**
      * @param string $pattern
      * @param mixed $handler
      * @param string $name
@@ -152,8 +128,8 @@ class Application
 
         try {
 
-            if ($this->useMiddleware === \true && $this->stack !== \null) {
-                return $this->callMiddlewareStack($request, $response);
+            if ($this->useMiddleware === \true && $this->hasMiddleware()) {
+                return $this->callMiddlewareStack($request, $response, $this->container);
             } else {
                 return $this->__invoke($request, $response);
             }
@@ -203,6 +179,8 @@ class Application
             throw new CoreException('Route not found', 404);
         }
 
+        $request->withAttribute(Route::class, $route);
+
         foreach ($route->getParams() as $k => $v) {
             $request->withAttribute($k, $v);
         }
@@ -214,7 +192,7 @@ class Application
         }
 
         if ($this->useMiddleware === \true && $route->hasMiddleware()) {
-            return $route->run($request, $response);
+            return $route->callMiddlewareStack($request, $response, $this->container);
         } else {
             return $route->__invoke($request, $response);
         }
@@ -637,6 +615,8 @@ class Application
 
     public function registerServices()
     {
+        $config = $this->container->get('config');
+
         $this->container->set('request', function () {
             return Request::createFromEnvironment();
         }, \false);
@@ -649,18 +629,15 @@ class Application
             return new Router();
         }, \false);
 
-        $this->container->set('logger',
-            new FileLog,
-            \false
-        );
+        $this->container->set('logger', function () use ($config) {
+            return new FileLog($config->get('log'));
+        }, \false);
 
-        $logger = $this->container->get('logger');
-
-        ErrorHandler::register($logger);
-
-        CoreException::setLogger($logger);
-
-        $config = $this->container->get('config');
+        if ($config->get('log.enabled')) {
+            $logger = $this->container->get('logger');
+            ErrorHandler::register($logger);
+            CoreException::setLogger($logger);
+        }
 
         foreach((array) $config->get('middleware', []) as $middleware) {
             $this->add($middleware);

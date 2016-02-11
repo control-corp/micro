@@ -6,6 +6,7 @@ use RuntimeException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use UnexpectedValueException;
+use Micro\Container\ContainerInterface;
 
 /**
  * Middleware
@@ -13,11 +14,16 @@ use UnexpectedValueException;
 trait MiddlewareAwareTrait
 {
     /**
+     * @var array
+     */
+    protected $middlewarePending = [];
+
+    /**
      * Middleware call stack
      *
      * @var array
      */
-    protected $stack;
+    protected $middlewareStack;
 
     /**
      * Middleware stack lock
@@ -25,6 +31,22 @@ trait MiddlewareAwareTrait
      * @var bool
      */
     protected $middlewareLock = false;
+
+    /**
+     * @param mixed $middleware
+     */
+    public function add($middleware)
+    {
+        $this->middlewarePending[] = $middleware;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function hasMiddleware()
+    {
+        return !empty($this->middlewarePending);
+    }
 
     /**
      * Add middleware
@@ -46,13 +68,13 @@ trait MiddlewareAwareTrait
             throw new RuntimeException('Middleware can’t be added once the stack is dequeuing');
         }
 
-        if ($this->stack === \null) {
+        if ($this->middlewareStack === \null) {
             $this->seedMiddlewareStack();
         }
 
-        $next = array_pop($this->stack);
+        $next = array_pop($this->middlewareStack);
 
-        $this->stack[] = function (ServerRequestInterface $req, ResponseInterface $res) use ($callable, $next) {
+        $this->middlewareStack[] = function (ServerRequestInterface $req, ResponseInterface $res) use ($callable, $next) {
 
             $result = call_user_func($callable, $req, $res, $next);
 
@@ -77,7 +99,7 @@ trait MiddlewareAwareTrait
      */
     protected function seedMiddlewareStack(callable $middleware = null)
     {
-        if ($this->stack !== \null) {
+        if ($this->middlewareStack !== \null) {
             throw new RuntimeException('MiddlewareStack can only be seeded once.');
         }
 
@@ -85,7 +107,7 @@ trait MiddlewareAwareTrait
             $middleware = $this;
         }
 
-        $this->stack = [$middleware];
+        $this->middlewareStack = [$middleware];
 
         return $this;
     }
@@ -95,16 +117,34 @@ trait MiddlewareAwareTrait
      *
      * @param  ServerRequestInterface $req A request object
      * @param  ResponseInterface      $res A response object
+     * @param  ContainerInterface     $container A container object
      *
      * @return ResponseInterface
      */
-    public function callMiddlewareStack(ServerRequestInterface $req, ResponseInterface $res)
+    public function callMiddlewareStack(ServerRequestInterface $req, ResponseInterface $res, ContainerInterface $container)
     {
-        if ($this->stack === \null) {
+        if ($this->middlewareStack === \null) {
             $this->seedMiddlewareStack();
         }
 
-        $start = array_pop($this->stack);
+        foreach ($this->middlewarePending as $k => $middleware) {
+
+            if (\is_string($middleware) && $container->has($middleware)) {
+                $middleware = $container->get($middleware);
+            } elseif (\is_string($middleware) && \class_exists($middleware)) {
+                $middleware = new $middleware;
+            }
+
+            unset($this->middlewarePending[$k]);
+
+            if (!\is_callable($middleware)) {
+                continue;
+            }
+
+            $this->addMiddleware($middleware);
+        }
+
+        $start = array_pop($this->middlewareStack);
 
         $this->middlewareLock = \true;
 
