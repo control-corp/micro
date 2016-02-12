@@ -150,36 +150,11 @@ class Request extends Message implements ServerRequestInterface
             }
         }
 
-        // cookies
-
-        $cookies = [];
-
-        $cookieHeader = isset($headers['cookie']) ? $headers['cookie'] : [];
-
-        if (is_array($cookieHeader) === true) {
-            $cookieHeader = isset($cookieHeader[0]) ? $cookieHeader[0] : '';
-        }
-
-        if (is_string($cookieHeader)) {
-            $cookieHeader = rtrim($cookieHeader, "\r\n");
-            $pieces = preg_split('@\s*[;,]\s*@', $cookieHeader);
-            foreach ($pieces as $cookie) {
-                $cookie = explode('=', $cookie, 2);
-                if (count($cookie) === 2) {
-                    $key = urldecode($cookie[0]);
-                    $value = urldecode($cookie[1]);
-                    if (!isset($cookies[$key])) {
-                        $cookies[$key] = $value;
-                    }
-                }
-            }
-        }
-
         $request = new static(
             $env['REQUEST_METHOD'],
             Uri::createFromEnvironment($env),
             $headers,
-            $cookies,
+            $_COOKIE,
             $env,
             \null,
             UploadedFile::createFromEnvironment()
