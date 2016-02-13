@@ -4,19 +4,23 @@ namespace Micro\Application;
 
 class Config implements \ArrayAccess
 {
-    protected static $config = [];
+    protected $config = [];
+    protected $cacheable = \true;
+    protected $cache = [];
 
-    public function __construct($data = \null)
+    public function __construct($data = \null, $cacheable = \true)
     {
         if ($data !== \null) {
             $this->load($data);
         }
+
+        $this->cacheable = $cacheable;
     }
 
     public function load(array $data)
     {
-        static::$config = \array_replace_recursive(
-            static::$config,
+        $this->config = \array_replace_recursive(
+            $this->config,
             $data
         );
 
@@ -25,24 +29,27 @@ class Config implements \ArrayAccess
 
     public function get($prop = \null, $default = \null)
     {
-        static $cache = [];
-
-        $config = static::$config;
+        $config = $this->config;
 
         if ($prop !== \null && \is_string($prop)) {
 
-            if (array_key_exists($prop, $cache)) {
-                return $cache[$prop];
+            if ($this->cacheable && array_key_exists($prop, $this->cache)) {
+                return $this->cache[$prop];
             }
 
             foreach (explode('.', $prop) as $key) {
-                if (!isset($config[$key])) {
-                    return $cache[$prop] = $default;
+                if (!array_key_exists($key, $config)) {
+                    if ($this->cacheable) {
+                        $this->cache[$prop] = $default;
+                    }
+                    return $default;
                 }
                 $config = &$config[$key];
             }
 
-            $cache[$prop] = $config;
+            if ($this->cacheable) {
+                $this->cache[$prop] = $config;
+            }
         }
 
         return $config;
@@ -65,8 +72,5 @@ class Config implements \ArrayAccess
 
     public function offsetUnset($offset)
     {
-        if (isset($this->data[$offset])) {
-            unset($this->data[$offset]);
-        }
     }
 }
