@@ -329,7 +329,11 @@ class Router implements ContainerAwareInterface
 
             if (isset($config['middleware'])) {
                 foreach ((array) $config['middleware'] as $middleware) {
-                    $route->add($middleware);
+                    if (is_array($middleware)) {
+                        $route->add($middleware[0], $middleware[1]);
+                    } else {
+                        $route->add($middleware);
+                    }
                 }
             }
         }

@@ -331,7 +331,7 @@ class Application
                 if (!$instance instanceof Package) {
                     throw new CoreException(\sprintf('%s must be instance of Micro\Application\Package', $packageInstance), 500);
                 }
-                $instance->setContainer($this->container)->boot();
+                $instance->setContainer($this->container)->boot($this);
                 $this->packages[$package] = $instance;
             }
         }
@@ -637,7 +637,11 @@ class Application
         }
 
         foreach((array) $config->get('middleware', []) as $middleware) {
-            $this->add($middleware);
+            if (is_array($middleware)) {
+                $this->add($middleware[0], $middleware[1]);
+            } else {
+                $this->add($middleware);
+            }
         }
 
         $sessionConfig = $config->get('session', []);

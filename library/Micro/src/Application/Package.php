@@ -22,7 +22,7 @@ abstract class Package implements ContainerAwareInterface
     /**
      * Some initializations like events
      */
-    public function boot()
+    public function boot(Application $app)
     {}
 
     /**

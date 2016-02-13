@@ -8,9 +8,6 @@ use Psr\Http\Message\ResponseInterface;
 use UnexpectedValueException;
 use Micro\Container\ContainerInterface;
 
-/**
- * Middleware
- */
 trait MiddlewareAwareTrait
 {
     /**
@@ -19,25 +16,29 @@ trait MiddlewareAwareTrait
     protected $middlewarePending = [];
 
     /**
-     * Middleware call stack
-     *
      * @var array
      */
     protected $middlewareStack;
 
     /**
-     * Middleware stack lock
-     *
      * @var bool
      */
-    protected $middlewareLock = false;
+    protected $middlewareLock = \false;
 
     /**
      * @param mixed $middleware
+     * @param int $priority
+     * @return self
      */
-    public function add($middleware)
+    public function add($middleware, $priority = 1)
     {
-        $this->middlewarePending[] = $middleware;
+        if (!isset($this->middlewarePending[$priority])) {
+            $this->middlewarePending[$priority] = [];
+        }
+
+        $this->middlewarePending[$priority][] = $middleware;
+
+        return $this;
     }
 
     /**
@@ -127,31 +128,40 @@ trait MiddlewareAwareTrait
             $this->seedMiddlewareStack();
         }
 
-        foreach ($this->middlewarePending as $k => $middleware) {
+        ksort($this->middlewarePending);
 
-            if (\is_string($middleware) && $container->has($middleware)) {
-                $middleware = $container->get($middleware);
-            } elseif (\is_string($middleware) && \class_exists($middleware)) {
-                $middleware = new $middleware;
+        foreach ($this->middlewarePending as $priority => $middlewares) {
+
+            krsort($middlewares);
+
+            foreach ($middlewares as $k => $middleware) {
+
+                unset($this->middlewarePending[$priority][$k]);
+
+                if (\is_string($middleware) && $container->has($middleware)) {
+                    $middleware = $container->get($middleware);
+                } elseif (\is_string($middleware) && \class_exists($middleware)) {
+                    $middleware = new $middleware;
+                }
+
+                if (!\is_callable($middleware)) {
+                    continue;
+                }
+
+                $this->addMiddleware($middleware);
             }
 
-            unset($this->middlewarePending[$k]);
-
-            if (!\is_callable($middleware)) {
-                continue;
-            }
-
-            $this->addMiddleware($middleware);
+            unset($this->middlewarePending[$priority]);
         }
 
         $start = array_pop($this->middlewareStack);
 
         $this->middlewareLock = \true;
 
-        $resp = $start($req, $res);
+        $res = $start($req, $res);
 
         $this->middlewareLock = \false;
 
-        return $resp;
+        return $res;
     }
 }

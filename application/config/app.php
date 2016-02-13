@@ -3,7 +3,9 @@
 return [
     'config_cache_enabled' => false,
     'middleware' => [
-        //App\Middleware\Test::class
+        //App\Middleware\Test::class,
+        //App\Middleware\Test2::class,
+        //App\Middleware\Test3::class,
     ],
     'micro_debug' => [
         'handlers' => [
