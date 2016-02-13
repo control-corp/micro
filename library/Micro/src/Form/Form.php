@@ -192,7 +192,7 @@ class Form
     public function populate(array $values)
     {
         foreach ($this->elements as $name => $element) {
-            if (array_key_exists($name, $values)) {
+            if (isset($values[$name]) || array_key_exists($name, $values)) {
                 $this->elements[$name]->setValue($values[$name]);
             }
         }

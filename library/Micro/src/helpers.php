@@ -77,7 +77,7 @@ if (!function_exists('config')) {
     {
         static $cache = [];
 
-        if (array_key_exists($key, $cache)) {
+        if (isset($cache[$key]) || array_key_exists($key, $cache)) {
             return $cache[$key];
         }
 

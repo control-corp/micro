@@ -184,7 +184,7 @@ class Route implements ContainerAwareInterface
                     unset($data[$v]);
                     continue;
                 }
-                if (array_key_exists($v, $data)) { // exists in user params
+                if (isset($data[$v]) || array_key_exists($v, $data)) { // exists in user params
                     $matches[4][$k] = $data[$v];
                     unset($data[$v]);
                 } else {

@@ -72,6 +72,13 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $this->assertSame('modified', $config->get('b.c'));
     }
 
+    public function testSecondNullLevel()
+    {
+        $config = $this->getConfigFactory();
+
+        $this->assertSame(null, $config->get('b.d', "NOTNULL"));
+    }
+
     public function testFirstUndefinedLevel()
     {
         $config = $this->getConfigFactory();
@@ -120,5 +127,27 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $config->load(['a' => 'modified']);
 
         $this->assertSame(1, $config->get('a'));
+    }
+
+    public function testCacheableNullTree()
+    {
+        $config = $this->getConfigFactory(true);
+
+        $this->assertSame(null, $config->get('b.d', "NOTNULL"));
+
+        $config->load(['b' => ['d' => 'modified']]);
+
+        $this->assertSame(null, $config->get('b.d', "NOTNULL"));
+    }
+
+    public function testCacheableUndefinedTree()
+    {
+        $config = $this->getConfigFactory(true);
+
+        $this->assertSame(null, $config->get('undefined'));
+
+        $config->load(['undefined' => 'modified']);
+
+        $this->assertSame(null, $config->get('undefined'));
     }
 }

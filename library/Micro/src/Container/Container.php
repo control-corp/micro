@@ -68,11 +68,12 @@ class Container implements ContainerInterface
         }
 
         // call resolved
-        if (isset($this->resolved[$service])) {
-            return $this->resolved[$service] === \false ? \null : $this->resolved[$service];
+        if (isset($this->resolved[$service]) || \array_key_exists($service, $this->resolved)) {
+            return $this->resolved[$service];
         }
 
         if (!isset($this->services[$service])
+            && !\array_key_exists($service, $this->services)
             && isset($this->bindings[$service])
             && !isset($this->ranBinders[$this->bindings[$service]])
             && $this->binder !== \null
@@ -82,12 +83,12 @@ class Container implements ContainerInterface
 
             $this->binder->$method();
 
-            if (isset($this->resolved[$service])) {
-                return $this->resolved[$service] === \false ? \null : $this->resolved[$service];
+            if (isset($this->resolved[$service]) || \array_key_exists($service, $this->resolved)) {
+                return $this->resolved[$service];
             }
         }
 
-        if (!isset($this->services[$service])) {
+        if (!isset($this->services[$service]) && !\array_key_exists($service, $this->services)) {
             throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" not found!', $service), 500);
         }
 
@@ -109,7 +110,7 @@ class Container implements ContainerInterface
             $result->setContainer($this);
         }
 
-        $this->resolved[$service] = $result === \null ? \false : $result;
+        $this->resolved[$service] = $result;
 
         return $result;
     }
@@ -120,11 +121,11 @@ class Container implements ContainerInterface
      */
     public function set($service, $callback, $override = \true)
     {
-        if (isset($this->resolved[$service])) {
+        if (isset($this->resolved[$service]) || \array_key_exists($service, $this->resolved)) {
             throw new \InvalidArgumentException(sprintf('[' . __METHOD__ . '] Service "%s" is resolved!', $service), 500);
         }
 
-        if (isset($this->services[$service]) && $override === \false) {
+        if ((isset($this->services[$service]) || \array_key_exists($service, $this->services)) && $override === \false) {
             return $this;
         }
 
