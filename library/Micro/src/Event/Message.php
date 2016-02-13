@@ -23,10 +23,15 @@ class Message
      * @param string $event
      * @param mixed $params
      */
-    public function __construct($event, array $params = [])
+    public function __construct($event = \null, array $params = [])
     {
-        $this->setEvent($event);
-        $this->setParams($params);
+        if ($event !== \null) {
+            $this->setEvent($event);
+        }
+
+        if (!empty($params)) {
+            $this->setParams($params);
+        }
     }
 
 	/**
@@ -39,7 +44,7 @@ class Message
 
 	/**
      * @param string $event
-     * @return \Micro\Event\Message
+     * @return Message
      */
     public function setEvent ($event)
     {
@@ -70,7 +75,7 @@ class Message
 
 	/**
      * @param mixed $params
-     * @return \Micro\Event\Message
+     * @return Message
      */
     public function setParams (array $params)
     {
@@ -81,7 +86,7 @@ class Message
 
     /**
      * @param bool $value
-     * @return \Micro\Event\Message
+     * @return Message
      */
     public function setStopPropagation($value)
     {
@@ -91,7 +96,7 @@ class Message
     }
 
     /**
-     * @return \Micro\Event\Message
+     * @return Message
      */
     public function stop()
     {

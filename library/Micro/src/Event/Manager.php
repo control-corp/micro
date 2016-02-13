@@ -10,12 +10,7 @@ class Manager
     protected $events = [];
 
     /**
-     * @var int
-     */
-    protected $serial = PHP_INT_MAX;
-
-    /**
-     * @return \SplPriorityQueue
+     * @return array
      */
     public function getEvents()
     {
@@ -25,19 +20,22 @@ class Manager
     /**
      * @param string $event
      * @param callable $callable
-     * @param number $priority
-     * @return \Micro\Event\Manager
+     * @param int $priority
+     * @return Manager
      */
     public function attach($event, $callable, $priority = 10)
     {
-        if (empty($this->events[$event])) {
-            $this->events[$event] = new \SplPriorityQueue();
+        if (!isset($this->events[$event])) {
+            $this->events[$event] = [];
         }
 
-        $this->events[$event]->insert(
-            $callable,
-            [$priority, $this->serial--]
-        );
+        $priority = (int) $priority;
+
+        if (!isset($this->events[$event][$priority])) {
+            $this->events[$event][$priority] = [];
+        }
+
+        $this->events[$event][$priority][] = $callable;
 
         return $this;
     }
@@ -49,20 +47,27 @@ class Manager
      */
     public function trigger($event, array $params = [])
     {
-        if (!array_key_exists($event, $this->events)) {
-            $this->events[$event] = new \SplPriorityQueue();
+        if (!isset($this->events[$event])) {
+            return \null;
         }
 
         $r = \null;
 
-        foreach (clone $this->events[$event] as $callback) {
+        $listeners = $this->events[$event];
 
-            $e = new Message($event, $params);
+        krsort($listeners, SORT_NUMERIC);
 
-            $r = call_user_func($callback, $e);
+        $message = new Message($event, $params);
 
-            if ($e->stopped()) {
-                break;
+        foreach ($listeners as $priority => $callbacks) {
+
+            foreach ($callbacks as $callback) {
+
+                $r = call_user_func($callback, $message);
+
+                if ($message->stopped()) {
+                    break 2;
+                }
             }
         }
 
