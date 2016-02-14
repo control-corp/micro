@@ -256,7 +256,7 @@ class Column
             if ($this->partial) {
                 $value = (string) $view->partial($this->viewScript, $data);
             } else {
-                $value = (string) $view->addData($data)
+                $value = (string) $view->assign($data)
                                        ->render($this->viewScript);
             }
         }

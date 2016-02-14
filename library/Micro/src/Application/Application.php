@@ -389,7 +389,7 @@ class Application
 
             $packageInstance = $this->container->get($package);
 
-            if (!\is_object($packageInstance)) {
+            if (!\is_object($packageInstance) || $packageInstance instanceof \Closure) {
                 throw new CoreException('Package "' . $package . '" is container service but it is not object', 500);
             }
 
@@ -452,7 +452,7 @@ class Application
             }
 
             if (is_array($packageResponse)) {
-                $view->addData($packageResponse);
+                $view->assign($packageResponse);
             }
 
             $packageResponse = $view;

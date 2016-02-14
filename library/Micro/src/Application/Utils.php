@@ -34,18 +34,10 @@ class Utils
             return '';
         }
 
-        $value = preg_replace('/[^a-z0-9-._]/ius', '', $value);
+        $value = preg_replace('/[^a-z0-9-]/ius', '', $value);
 
         if (strpos($value, '-') !== \false) {
             $value = str_replace(' ', '', ucwords(str_replace('-', ' ', $value)));
-        }
-
-        if (strpos($value, '_') !== \false) {
-            $value = str_replace(' ', '', ucwords(str_replace('_', ' ', $value)));
-        }
-
-        if (strpos($value, '.') !== \false) {
-            $value = str_replace(' ', '', ucwords(str_replace('.', ' ', $value)));
         }
 
         return $value;

@@ -12,7 +12,7 @@ class View
 
     protected $__currentSection;
 
-    protected $data = [];
+    protected $__data = [];
 
     protected $paths = [];
 
@@ -29,7 +29,7 @@ class View
     public function __construct($template = \null, array $data = \null)
     {
         $this->template = $template;
-        $this->data = $data ?: [];
+        $this->__data = $data ?: [];
     }
 
     public function addPath($path)
@@ -53,18 +53,16 @@ class View
         $renderParent = $this->renderParent;
 
         if ($template !== \null) {
-            $file = $template;
             $renderParent = \false;
         } else {
-            if (empty($this->template)) {
-                throw new CoreException('Template is empty', 500);
-            }
-            $file = $this->template;
+            $template = $this->template;
         }
 
-        $file .= '.phtml';
+        if (empty($template)) {
+            throw new CoreException('Template is empty', 500);
+        }
 
-        $file = ltrim($file, '/\\');
+        $file = ltrim($template . '.phtml', '/\\');
 
         foreach ($this->paths as $path) {
             $filePath = $path . '/' . $file;
@@ -90,7 +88,7 @@ class View
 
         ob_start();
 
-        extract($this->data);
+        extract($this->__data);
 
         try {
             include $__path;
@@ -111,19 +109,12 @@ class View
 
     public function setData($data)
     {
-        $this->data = $data;
+        $this->__data = $data;
 
         return $this;
     }
 
-    public function addData(array $data)
-    {
-        $this->data = array_merge($this->data, $data);
-
-        return $this;
-    }
-
-    public function assign($key, $value)
+    public function assign($key, $value = null)
     {
         if (is_array($key)) {
             foreach ($key as $k => $v) {
@@ -132,7 +123,11 @@ class View
             return $this;
         }
 
-        $this->data[$key] = $value;
+        if ($value === null) {
+            return $this;
+        }
+
+        $this->__data[$key] = $value;
 
         return $this;
     }
@@ -151,23 +146,23 @@ class View
 
     public function __get($key)
     {
-        return isset($this->data[$key]) ? $this->data[$key] : \null;
+        return isset($this->__data[$key]) ? $this->__data[$key] : \null;
     }
 
     public function __set($key, $value)
     {
-        $this->data[$key] = $value;
+        $this->__data[$key] = $value;
     }
 
     public function __isset($key)
     {
-        return $this->data[$key];
+        return $this->__data[$key];
     }
 
     public function __unset($key)
     {
-        if (isset($this->data[$key])) {
-            unset($this->data[$key]);
+        if (isset($this->__data[$key])) {
+            unset($this->__data[$key]);
         }
     }
 
@@ -175,24 +170,26 @@ class View
     {
         $view = clone $this;
 
-        if ($template === $view->getTemplate()) {
-            throw new CoreException('Recursion detected', 500);
-        }
-
         $view->setSections([]);
 
         $view->setData($data);
 
         $view->setParent(\null);
 
-        return $view->render($template);
+        $view->setRenderParent(\false);
+
+        $view->setTemplate($template);
+
+        return $view->render();
     }
 
     public function extend($template, array $data = [])
     {
         $view = clone $this;
 
-        $view->addData($data);
+        $view->setParent(\null);
+
+        $view->assign($data);
 
         $view->setTemplate($template);
 
