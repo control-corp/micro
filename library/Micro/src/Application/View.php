@@ -20,11 +20,11 @@ class View
 
     protected $renderParent = \true;
 
-    protected static $helpers = [];
-
     protected $package;
 
     protected $resolvedPaths = [];
+
+    protected static $helpers = [];
 
     /**
      * @param string $template
@@ -38,20 +38,21 @@ class View
 
     /**
      * @param string $path
+     * @param string $namespace
      * @return View
      */
-    public function addPath($path)
+    public function addPath($path, $namespace = \null)
     {
         if (is_array($path)) {
             foreach ($path as $p) {
-                $this->addPath($p);
+                $this->addPath($p, $namespace);
             }
             return $this;
         }
 
         $path = rtrim($path, '/\\');
 
-        $this->paths[$path] = $path;
+        $this->paths[$namespace ?: $path] = $path;
 
         return $this;
     }
@@ -75,12 +76,29 @@ class View
             throw new CoreException('Template is empty', 500);
         }
 
+        $parts = explode('::', $template);
+
+        $namespace = null;
+
+        if (isset($parts[1])) {
+            $namespace = $parts[0];
+            $template  = $parts[1];
+        } else {
+            $template  = $parts[0];
+        }
+
         $file = ltrim($template . '.phtml', '/\\');
 
-        foreach ($this->paths as $path) {
+        $paths = $namespace && isset($this->paths[$namespace]) ? (array) $this->paths[$namespace] : $this->paths;
+
+        foreach ($paths as $path) {
+
             $filePath = $path . '/' . $file;
+
             if ((isset($this->resolvedPaths[$filePath]) || \is_file($filePath))) {
+
                 $content = $this->evalFile($this->resolvedPaths[$filePath] = $filePath);
+
                 if ($renderParent === \true && $this->parent !== \null) {
                     $this->parent->setSections(array_merge(
                         $this->getSections(),
@@ -88,6 +106,7 @@ class View
                     ));
                     $content = $this->parent->render();
                 }
+
                 return $content;
             }
         }
