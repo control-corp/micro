@@ -221,31 +221,6 @@ if (!function_exists('escape')) {
     }
 }
 
-if (!function_exists('current_package')) {
-    function current_package()
-    {
-        $route = app('router')->getCurrentRoute();
-
-        if ($route === \null) {
-            throw new CoreException(sprintf('[' . __FUNCTION__ . '] There is no current route'));
-        }
-
-        $resource = $route->getHandler();
-
-        if ($resource instanceof \Closure) {
-            $resource = $resource(app('request'), app('response'));
-        }
-
-        if (!is_string($resource)) {
-            return \null;
-        }
-
-        $parts = explode('\\', $resource);
-
-        return $parts[0];
-    }
-}
-
 if (!function_exists('is_allowed')) {
     function is_allowed($resource = \null, $role = \null, $privilege = \true)
     {
@@ -281,7 +256,7 @@ if (!function_exists('is_allowed')) {
             $resource = $route->getHandler();
 
             if ($resource instanceof \Closure) {
-                $resource = $resource(app('request'), app('response'));
+                $resource = call_user_func($resource, app('request'), app('response'));
             }
 
             if (!is_string($resource)) {

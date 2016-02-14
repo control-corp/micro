@@ -175,7 +175,7 @@ class Page extends AbstractPage
         $resource = $route->getHandler();
 
         if ($resource instanceof \Closure) {
-            $resource = $resource(app('request'), app('response'));
+            $resource = call_user_func($resource->bindTo($route), app('request'), app('response'));
         }
 
         if (!\is_string($resource) || \is_allowed($resource, $role)) {

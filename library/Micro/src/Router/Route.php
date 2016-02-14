@@ -338,7 +338,7 @@ class Route implements ContainerAwareInterface
         $handler = $this->getHandler();
 
         if ($handler instanceof \Closure) {
-            $handler = $handler($request, $response, $this->params);
+            $handler = call_user_func($handler, $request, $response);
         }
 
         if ($handler instanceof ResponseInterface) {

@@ -224,17 +224,6 @@ class Router implements ContainerAwareInterface
     }
 
     /**
-     * @param Route $route
-     * @return Router
-     */
-    public function setCurrentRoute(Route $route)
-    {
-        $this->currentRoute = $route;
-
-        return $this;
-    }
-
-    /**
      * @return Route
      */
     public function getCurrentRoute()
@@ -249,14 +238,16 @@ class Router implements ContainerAwareInterface
     {
         if (!isset($this->routes['admin'])) {
 
-            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function (ServerRequestInterface $request, ResponseInterface $response) {
+            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function () {
 
                 static $cache = [];
 
-                $package = $request->getAttribute('package');
-                $controller = $request->getAttribute('controller');
-                $action = $request->getAttribute('action');
-                $id = $request->getAttribute('id');
+                $params = $this->getParams() + $this->getDefaults();
+
+                $package = $params['package'];
+                $controller = $params['controller'];
+                $action = $params['action'];
+                $id = $params['id'];
 
                 $hash = 'admin_' . $package . '_' . $controller . '_' . $action . '_' . $id;
 
@@ -277,14 +268,16 @@ class Router implements ContainerAwareInterface
 
         if (!isset($this->routes['default'])) {
 
-            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function (ServerRequestInterface $request, ResponseInterface $response) {
+            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function () {
 
                 static $cache = [];
 
-                $package = $request->getAttribute('package');
-                $controller = $request->getAttribute('controller');
-                $action = $request->getAttribute('action');
-                $id = $request->getAttribute('id');
+                $params = $this->getParams() + $this->getDefaults();
+
+                $package = $params['package'];
+                $controller = $params['controller'];
+                $action = $params['action'];
+                $id = $params['id'];
 
                 $hash = 'front_' . $package . '_' . $controller . '_' . $action . '_' . $id;
 
