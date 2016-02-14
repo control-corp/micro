@@ -201,9 +201,23 @@ if (!function_exists('flash')) {
 }
 
 if (!function_exists('escape')) {
-    function escape($var, $encoding = 'UTF-8')
+    function escape($var, $functions = null)
     {
-        return htmlspecialchars($var, ENT_COMPAT, $encoding);
+        static $flags;
+
+        if (!isset($flags)) {
+            $flags = ENT_QUOTES | (defined('ENT_SUBSTITUTE') ? ENT_SUBSTITUTE : 0);
+        }
+
+        if ($functions !== null) {
+            foreach (explode('|', $functions) as $func) {
+                if (is_callable($func)) {
+                    $var = call_user_func($func, $var);
+                }
+            }
+        }
+
+        return htmlspecialchars($var, $flags, 'UTF-8');
     }
 }
 
