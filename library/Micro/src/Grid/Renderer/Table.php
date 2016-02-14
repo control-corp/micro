@@ -7,6 +7,7 @@ use Micro\Grid\Column;
 use Micro\Form\Element;
 use Micro\Application\View;
 use Micro\Router\Router;
+use Micro\Exception\Exception as CoreException;
 
 class Table implements RendererInterface
 {
@@ -27,13 +28,7 @@ class Table implements RendererInterface
     public function getView()
     {
         if (\null === $this->view) {
-            $this->view = new View();
-            try {
-                $this->view->addPath(package_path(current_package(), 'Resources/views'));
-                $this->view->addPath(config('view.paths', []));
-            } catch (\Exception $e) {
-                app('app')->collectException($e);
-            }
+            throw new CoreException('View in the grid renderer is NULL');
         }
 
         return $this->view;
