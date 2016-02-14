@@ -29,7 +29,8 @@ class Table implements RendererInterface
         if (\null === $this->view) {
             $this->view = new View();
             try {
-                $this->view->injectPaths((array) package_path(current_package(), 'Resources/views'));
+                $this->view->addPath(package_path(current_package(), 'Resources/views'));
+                $this->view->addPath(config('view.paths', []));
             } catch (\Exception $e) {
                 app('app')->collectException($e);
             }

@@ -465,7 +465,8 @@ class Application
             }
 
             try {
-                $packageResponse->injectPaths((array) package_path($parts[0], 'Resources/views'));
+                $packageResponse->addPath(package_path($parts[0], 'Resources/views'));
+                $packageResponse->addPath(config('view.paths', []));
             } catch (\Exception $e) {
 
             }

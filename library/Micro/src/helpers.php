@@ -65,7 +65,7 @@ if (!function_exists('package_path')) {
         $packagePath = $packages[$package];
 
         if ($path !== \null) {
-            $packagePath .= DIRECTORY_SEPARATOR . trim($path, '/\\');
+            $packagePath .= '/' . trim($path, '/\\');
         }
 
         return $packagePath;
@@ -172,12 +172,11 @@ if (!function_exists('view')) {
     /**
      * @param string $template
      * @param array $data
-     * @param boolean $injectPaths
      * @return \Micro\Application\View
      */
-    function view($template, array $data = \null, $injectPaths = \false)
+    function view($template, array $data = \null)
     {
-        return new View($template, $data, $injectPaths);
+        return new View($template, $data);
     }
 }
 

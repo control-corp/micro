@@ -18,8 +18,6 @@ class View
 
     protected $sections = [];
 
-    protected $cloned = \false;
-
     protected $renderParent = \true;
 
     protected static $helpers = [];
@@ -28,14 +26,10 @@ class View
 
     protected $resolvedPaths = [];
 
-    public function __construct($template = \null, array $data = \null, $injectPaths = \false)
+    public function __construct($template = \null, array $data = \null)
     {
         $this->template = $template;
         $this->data = $data ?: [];
-
-        if ($injectPaths) {
-            $this->injectPaths();
-        }
     }
 
     public function addPath($path)
@@ -313,26 +307,9 @@ class View
         return \call_user_func_array(static::$helpers[$method], $params);
     }
 
-    public function __clone()
-    {
-        $this->cloned = \true;
-    }
-
-    public function isCloned()
-    {
-        return $this->cloned;
-    }
-
     public function setRenderParent($flag)
     {
         $this->renderParent = (bool) $flag;
-
-        return $this;
-    }
-
-    public function injectPaths(array $paths = [])
-    {
-        $this->addPath(array_merge($paths, config('view.paths', [])));
 
         return $this;
     }
