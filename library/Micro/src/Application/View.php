@@ -26,12 +26,20 @@ class View
 
     protected $resolvedPaths = [];
 
+    /**
+     * @param string $template
+     * @param array $data
+     */
     public function __construct($template = \null, array $data = \null)
     {
         $this->template = $template;
         $this->__data = $data ?: [];
     }
 
+    /**
+     * @param string $path
+     * @return View
+     */
     public function addPath($path)
     {
         if (is_array($path)) {
@@ -48,6 +56,11 @@ class View
         return $this;
     }
 
+    /**
+     * @param string $template
+     * @throws CoreException
+     * @return string
+     */
     public function render($template = \null)
     {
         $renderParent = $this->renderParent;
@@ -82,6 +95,11 @@ class View
         throw new CoreException('Template "' . $file . '" not found in ' . implode(', ', $this->paths), 500);
     }
 
+    /**
+     * @param string $__path
+     * @throws Exception
+     * @return string
+     */
     public function evalFile($__path)
     {
         $__obLevel = ob_get_level();
@@ -102,19 +120,31 @@ class View
         return ob_get_clean();
     }
 
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return get_class($this);
     }
 
-    public function setData($data)
+    /**
+     * @param string $data
+     * @return View
+     */
+    public function setData(array $data)
     {
         $this->__data = $data;
 
         return $this;
     }
 
-    public function assign($key, $value = null)
+    /**
+     * @param string|array $key
+     * @param mixed $value
+     * @return View
+     */
+    public function assign($key, $value = \null)
     {
         if (is_array($key)) {
             foreach ($key as $k => $v) {
@@ -132,6 +162,10 @@ class View
         return $this;
     }
 
+    /**
+     * @param string $template
+     * @return View
+     */
     public function setTemplate($template)
     {
         $this->template = $template;
@@ -139,26 +173,44 @@ class View
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getTemplate()
     {
         return $this->template;
     }
 
+    /**
+     * @param string $key
+     * @return mixed
+     */
     public function __get($key)
     {
         return isset($this->__data[$key]) ? $this->__data[$key] : \null;
     }
 
+    /**
+     * @param string $key
+     * @param mixed $value
+     */
     public function __set($key, $value)
     {
         $this->__data[$key] = $value;
     }
 
+    /**
+     * @param string $key
+     * @return boolean
+     */
     public function __isset($key)
     {
-        return $this->__data[$key];
+        return isset($this->__data[$key]);
     }
 
+    /**
+     * @param string $key
+     */
     public function __unset($key)
     {
         if (isset($this->__data[$key])) {
@@ -166,6 +218,11 @@ class View
         }
     }
 
+    /**
+     * @param string $template
+     * @param array $data
+     * @return string
+     */
     public function partial($template, array $data = [])
     {
         $view = clone $this;
@@ -183,9 +240,15 @@ class View
         return $view->render();
     }
 
+    /**
+     * @param string $template
+     * @param array $data
+     */
     public function extend($template, array $data = [])
     {
         $view = clone $this;
+
+        $view->setRenderParent(\true);
 
         $view->setParent(\null);
 
@@ -196,6 +259,10 @@ class View
         $this->setParent($view);
     }
 
+    /**
+     * @param View $parent
+     * @return View
+     */
     public function setParent(View $parent = \null)
     {
         $this->parent = $parent;
@@ -203,6 +270,10 @@ class View
         return $this;
     }
 
+    /**
+     * @param string $section
+     * @throws CoreException
+     */
     public function start($section)
     {
         if ($this->__currentSection !== \null) {
@@ -214,6 +285,10 @@ class View
         ob_start();
     }
 
+    /**
+     * @throws CoreException
+     * @return View
+     */
     public function stop()
     {
         if ($this->__currentSection === \null) {
@@ -227,6 +302,11 @@ class View
         return $this->section($section, ob_get_clean());
     }
 
+    /**
+     * @param string $section
+     * @param string $content
+     * @return View
+     */
     public function section($section, $content)
     {
         if (!isset($this->sections[$section])) {
@@ -238,6 +318,11 @@ class View
         return $this;
     }
 
+    /**
+     * @param string $section
+     * @param string $default
+     * @return string
+     */
     public function renderSection($section, $default = \null)
     {
         if (!isset($this->sections[$section])) {
@@ -247,6 +332,10 @@ class View
         return implode("\n", (array) $this->sections[$section]);
     }
 
+    /**
+     * @param array $sections
+     * @return View
+     */
     public function setSections(array $sections)
     {
         $this->sections = $sections;
@@ -254,15 +343,17 @@ class View
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getSections()
     {
         return $this->sections;
     }
 
     /**
-     *
      * @param string $package
-     * @return \Micro\Application\View
+     * @return View
      */
     public function widget($package)
     {
@@ -271,6 +362,12 @@ class View
         return $this;
     }
 
+    /**
+     * @param string $method
+     * @param array $params
+     * @throws CoreException
+     * @return mixed
+     */
     public function __call($method, $params)
     {
         $method = \ucfirst($method);
@@ -304,6 +401,10 @@ class View
         return \call_user_func_array(static::$helpers[$method], $params);
     }
 
+    /**
+     * @param boolean $flag
+     * @return View
+     */
     public function setRenderParent($flag)
     {
         $this->renderParent = (bool) $flag;
