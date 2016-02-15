@@ -324,16 +324,28 @@ class Application
 
         foreach ($packages as $package => $path) {
 
+            require $path . '/Package.php';
+
             $packageInstance = $package . '\\Package';
 
             if (\class_exists($packageInstance, \true)) {
-                $instance = new $packageInstance($this);
+
+                $instance = new $packageInstance;
+
                 if (!$instance instanceof Package) {
                     throw new CoreException(\sprintf('%s must be instance of Micro\Application\Package', $packageInstance), 500);
                 }
-                $instance->setContainer($this->container)->boot($this);
+
+                \MicroLoader::addPath($package, $path . '/src');
+
+                $instance->boot($this, $this->container);
+
                 $this->packages[$package] = $instance;
+
+                continue;
             }
+
+            throw new CoreException(sprintf('[' . __METHOD__ . '] Package [%s] is loaded but class [%s\Package] is missing', $package, $package));
         }
 
         $this->booted = \true;
@@ -433,7 +445,7 @@ class Application
             $scope = $packageInstance->getScope();
         }
 
-        if (($packageResponse = $packageInstance->$action($request, $response, $this->container)) instanceof ResponseInterface) {
+        if (($packageResponse = $packageInstance->$action()) instanceof ResponseInterface) {
             return $packageResponse;
         }
 
@@ -465,7 +477,7 @@ class Application
             }
 
             try {
-                $packageResponse->addPath(package_path($parts[0], 'Resources/views'));
+                $packageResponse->addPath(package_path($parts[0], '/views'), $packageParam);
                 $packageResponse->addPath(config('view.paths', []));
             } catch (\Exception $e) {
 

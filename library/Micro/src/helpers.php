@@ -56,16 +56,16 @@ if (!function_exists('public_path')) {
 if (!function_exists('package_path')) {
     function package_path($package, $path = \null)
     {
-        $packages = app('config')->get('packages', []);
+        $packages = app('app')->getPackages();
 
         if (!isset($packages[$package])) {
             throw new CoreException(sprintf('[' . __FUNCTION__ . '] Invalid package "%s"', $package));
         }
 
-        $packagePath = $packages[$package];
+        $packagePath = $packages[$package]->getDir();
 
         if ($path !== \null) {
-            $packagePath .= '/' . trim($path, '/\\');
+            $packagePath .= DIRECTORY_SEPARATOR . trim($path, '/\\');
         }
 
         return $packagePath;

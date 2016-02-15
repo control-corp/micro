@@ -32,7 +32,7 @@ class Test
         if (\config('micro_debug.handlers.dev_tools')) {
 
             $view = $this->view = new View('debug');
-            $view->addPath(package_path('App', 'Resources'));
+            $view->addPath(package_path('App', '/views/middleware'));
 
             \app('event')->attach('render.start', function (Message $message) use ($view) {
                 $message->getParam('view')->section('styles', (string) $view->partial('css'));
@@ -86,10 +86,11 @@ class Test
 
                     $total = sprintf('%.6f', microtime(\true) - $_SERVER['REQUEST_TIME_FLOAT']);
 
+                    $label = 'Executed ' . $queryCount . ' queries in ' . sprintf('%.6f', $totalTime) . ' seconds. (' . ($total ? \round(($totalTime / $total) * 100, 2) : 0) . '%)';
+                    $table = [];
+                    $table[] = ['Time', 'Event', 'Parameters'];
+
                     if ($profiler->getQueryProfiles()) {
-                        $label = 'Executed ' . $queryCount . ' queries in ' . sprintf('%.6f', $totalTime) . ' seconds. (' . ($total ? \round(($totalTime / $total) * 100, 2) : 0) . '%)';
-                        $table = [];
-                        $table[] = ['Time', 'Event', 'Parameters'];
                         foreach ($profiler->getQueryProfiles() as $k => $query) {
                             if ($query->getElapsedSecs() > $longestTime) {
                                 $longestTime  = $query->getElapsedSecs();
@@ -101,6 +102,8 @@ class Test
                         }
                         FirePHP\FirePHP::getInstance()->table('DB - ' . $label, $table);
                     }
+
+                    FirePHP\FirePHP::getInstance()->table('DB - ' . $label, $table);
                 }
             }
         }

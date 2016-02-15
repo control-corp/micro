@@ -23,10 +23,6 @@ if (is_file($cachedConfigFile)) {
     }
 }
 
-if (isset($config['packages'])) {
-    MicroLoader::addPath($config['packages']);
-}
-
 $container = new Container(isset($config['dependencies']) ? $config['dependencies'] : []);
 
 $container->set('config', new Config($config));
@@ -39,12 +35,12 @@ $container->set('config', new Config($config));
     return $monolog;
 }); */
 
-/* $container->set('exception.handler', function () {
+$container->set('exception.handler', function () {
     $whoops = new Whoops\Run();
     $whoops->allowQuit(false);
     $whoops->writeToOutput(false);
     $whoops->pushHandler(new Whoops\Handler\PrettyPageHandler());
     return $whoops;
-}); */
+});
 
 return $container;

@@ -32,7 +32,7 @@ class Reports extends Crud
 
         $selectedBrands = isset($filters['brands']) ? json_decode($filters['brands'], \true) : [];
 
-        $form = new Form(package_path('Brands', 'Resources/forms/admin/reports-all-brands-filters.php'));
+        $form = new Form(package_path('Brands', '/forms/admin/reports-all-brands-filters.php'));
 
         $form->populate($filters);
 
@@ -56,7 +56,7 @@ class Reports extends Crud
             $brandsSelect->where('NomCountries.continentId IN(?)', $filters['continentId']);
         }
 
-        $grid = new Grid($brandsModel, package_path('Brands', 'Resources/grids/admin/reports/all-brands.php'));
+        $grid = new Grid($brandsModel, package_path('Brands', '/grids/admin/reports/all-brands.php'));
 
         $grid->getRenderer()->setView($this->view);
 
@@ -101,7 +101,7 @@ class Reports extends Crud
             return $filters;
         }
 
-        $form = new Form(package_path('Brands', 'Resources/forms/admin/reports-brands-filters.php'));
+        $form = new Form(package_path('Brands', '/forms/admin/reports-brands-filters.php'));
 
         $form->populate($filters);
 

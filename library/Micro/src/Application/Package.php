@@ -2,13 +2,10 @@
 
 namespace Micro\Application;
 
-use Micro\Container\ContainerAwareInterface;
-use Micro\Container\ContainerAwareTrait;
+use Micro\Container\ContainerInterface;
 
-abstract class Package implements ContainerAwareInterface
+abstract class Package
 {
-    use ContainerAwareTrait;
-
     /**
      * @var string
      */
@@ -20,9 +17,9 @@ abstract class Package implements ContainerAwareInterface
     protected $dir;
 
     /**
-     * Some initializations like events
+     * Some initializations like config, services and events
      */
-    public function boot(Application $app)
+    public function boot(Application $app, ContainerInterface $container)
     {}
 
     /**

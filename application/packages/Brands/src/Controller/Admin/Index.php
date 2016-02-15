@@ -44,7 +44,7 @@ class Index extends Crud
             return $response;
         }
 
-        $form = new Form(package_path('Brands', 'Resources/forms/admin/index-filters.php'));
+        $form = new Form(package_path('Brands', '/forms/admin/index-filters.php'));
 
         $form->populate($this->view->filters);
 
