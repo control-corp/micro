@@ -3,9 +3,6 @@
 return [
     'config_cache_enabled' => false,
     'middleware' => [
-        //App\Middleware\Test::class,
-        //App\Middleware\Test2::class,
-        //App\Middleware\Test3::class,
     ],
     'micro_debug' => [
         'handlers' => [
@@ -29,13 +26,33 @@ return [
     ],
     'view' => [
         'paths' => [
-            'application/resources',
+            'shared' => 'application/resources',
         ]
     ],
     /* 'session' => [
         'name' => 'TEST',
         'save_path' => 'data/session'
     ], */
+    'cache' => [
+        'default'  => 'file',
+        'adapters' => [
+            'file' => [
+                'frontend' => [
+                    'adapter' => 'Core',
+                    'options' => [
+                        'lifetime' => (3600 * 24),
+                        'automatic_serialization' => \true,
+                    ],
+                ],
+                'backend' => [
+                    'adapter' => 'File',
+                    'options' => [
+                        'cache_dir' => 'data/cache',
+                    ],
+                ],
+            ],
+        ],
+    ],
     'translator' => [
         'adapter' => 'TranslatorArray',
         'options' => [
