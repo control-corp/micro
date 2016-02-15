@@ -6,8 +6,6 @@ use Micro\Exception\Exception as CoreException;
 use Micro\Application\Utils;
 use Micro\Container\ContainerAwareInterface;
 use Micro\Container\ContainerAwareTrait;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 class Router implements ContainerAwareInterface
 {

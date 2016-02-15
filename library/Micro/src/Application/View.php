@@ -44,8 +44,8 @@ class View
     public function addPath($path, $namespace = \null)
     {
         if (is_array($path)) {
-            foreach ($path as $p) {
-                $this->addPath($p, $namespace);
+            foreach ($path as $k => $v) {
+                $this->addPath($v, is_int($k) ? $namespace : $k);
             }
             return $this;
         }
@@ -399,7 +399,7 @@ class View
             if (\null !== $this->package) {
                 $packages = [$this->package];
             } else {
-                $packages = array_keys(\config('packages', []));
+                $packages = array_keys(\app('app')->getPackages());
             }
 
             foreach ($packages as $package) {

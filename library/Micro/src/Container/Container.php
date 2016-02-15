@@ -44,6 +44,14 @@ class Container implements ContainerInterface
             SharedContainer::setInstance($this);
         }
 
+        $this->configure($config);
+    }
+
+    /**
+     * @param array $config
+     */
+    public function configure(array $config)
+    {
         if (isset($config['services'])) {
             foreach ($config['services'] as $id => $service) {
                 $this->set($id, $service);

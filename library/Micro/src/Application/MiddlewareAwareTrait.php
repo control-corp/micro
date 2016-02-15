@@ -32,6 +32,17 @@ trait MiddlewareAwareTrait
      */
     public function add($middleware, $priority = 1)
     {
+        if (\is_array($middleware)) {
+            foreach ($middleware as $k => $v) {
+                if (is_int($k)) {
+                    $this->add($v, $priority);
+                } else {
+                    $this->add($k, $v);
+                }
+            }
+            return $this;
+        }
+
         if (!isset($this->middlewarePending[$priority])) {
             $this->middlewarePending[$priority] = [];
         }

@@ -44,7 +44,6 @@ class Controller
         $this->request = $request;
         $this->response = $response;
         $this->container = $container;
-
         $this->view = new View();
     }
 

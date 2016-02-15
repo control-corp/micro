@@ -7,6 +7,7 @@ class MicroLoader
     protected static $prefixLengths = [];
     protected static $prefixDirs = [];
     protected static $files = [];
+    protected static $autoloaded = [];
 
     public static function register()
     {
@@ -23,10 +24,10 @@ class MicroLoader
         }
 
         if (isset(static::$files[$class])) {
-            if (static::$files[$class] === false) {
+            if (static::$files[$class] === 'NOT EXISTS') {
                 return;
             }
-            include static::$files[$class];
+            require static::$files[$class];
             return true;
         }
 
@@ -39,8 +40,8 @@ class MicroLoader
                 if (0 === strpos($class, $prefix)) {
                     foreach (static::$prefixDirs[$prefix] as $dir) {
                         if (is_file($file = $dir . DIRECTORY_SEPARATOR . substr($logicalPathPsr4, $length))) {
-                            include $file;
-                            static::$files[$class] = $file;
+                            require $file;
+                            static::$autoloaded[$class] = static::$files[$class] = $file;
                             return true;
                         }
                     }
@@ -48,7 +49,7 @@ class MicroLoader
             }
         }
 
-        static::$files[$class] = false;
+        static::$files[$class] = 'NOT EXISTS';
     }
 
     public static function addPath($prefix, $path = null)
@@ -71,7 +72,12 @@ class MicroLoader
         }
 
         static::$prefixLengths[$prefix[0]][$prefix] = $length;
-        static::$prefixDirs[$prefix] = (array) $path;
+
+        if (!isset(static::$prefixDirs[$prefix])) {
+            static::$prefixDirs[$prefix] = (array) $path;
+        } else {
+            static::$prefixDirs[$prefix] = array_merge(static::$prefixDirs[$prefix], (array) $path);
+        }
     }
 
     public static function getFiles()
@@ -79,8 +85,18 @@ class MicroLoader
         return static::$files;
     }
 
+    public static function getAutoloaded()
+    {
+        return static::$autoloaded;
+    }
+
     public static function setFiles(array $files)
     {
         static::$files = $files;
+    }
+
+    public static function addFiles(array $files)
+    {
+        static::$files = array_merge(static::$files, $files);
     }
 }
