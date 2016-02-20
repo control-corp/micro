@@ -36,16 +36,16 @@ return array(
         ]
     ],
     'columns' => array(
-        'ids' => array(
+        'ids' => [
             'type' => 'checkbox',
-            'options' => array(
+            'options' => [
                 'sourceField' => 'id',
                 'checkAll' => 1,
                 'class' => 'text-center',
                 'headClass' => 'text-center',
                 'headStyle' => 'width: 3%',
-            )
-        ),
+            ]
+        ],
         'id' => array(
             'options' => array(
                 'sourceField' => 'id',

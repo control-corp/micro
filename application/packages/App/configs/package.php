@@ -1,14 +1,23 @@
 <?php
 
+use App\Index;
+
 return [
     'middleware' => [
-        App\Middleware\Test::class,
         App\Middleware\Test2::class,
         App\Middleware\Test3::class,
     ],
+    'router' => [
+        'routes' => [
+            'test' => [
+                'pattern' => '/test',
+                'handler' => 'App\Index@index'
+            ]
+        ]
+    ],
     'dependencies' => [
         'services' => [
-            App\Index::class => App\IndexFactory::class
+            App\Index::class => App\IndexFactory::class,
         ]
     ],
     'microloader' => [

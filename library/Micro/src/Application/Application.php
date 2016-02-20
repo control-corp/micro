@@ -172,7 +172,8 @@ class Application
         $router = $this->getRouter();
 
         if ($this->container['config']['router.default_routes']) {
-            $router->loadDefaultRoutes();
+            $router->mapFromConfig($this->container['config']->get('router.routes', []))
+                   ->loadDefaultRoutes();
         }
 
         if (($route = $router->match($request->getUri()->getPath())) === \null) {
@@ -330,7 +331,7 @@ class Application
 
             if (\class_exists($packageInstance, \true)) {
 
-                $instance = new $packageInstance;
+                $instance = new $packageInstance($this->container);
 
                 if (!$instance instanceof Package) {
                     throw new CoreException(\sprintf('%s must be instance of Micro\Application\Package', $packageInstance), 500);
@@ -338,7 +339,7 @@ class Application
 
                 \MicroLoader::addPath($package, $path . '/src');
 
-                $instance->boot($this, $this->container);
+                $instance->boot($this->container);
 
                 $this->packages[$package] = $instance;
 
@@ -347,6 +348,8 @@ class Application
 
             throw new CoreException(sprintf('[' . __METHOD__ . '] Package [%s] is loaded but class [%s\Package] is missing', $package, $package));
         }
+
+        $this->marshalConfigKeys();
 
         $this->booted = \true;
     }
@@ -649,20 +652,6 @@ class Application
             CoreException::setLogger($logger);
         }
 
-        foreach((array) $config->get('middleware', []) as $middleware) {
-            if (is_array($middleware)) {
-                $this->add($middleware[0], $middleware[1]);
-            } else {
-                $this->add($middleware);
-            }
-        }
-
-        $sessionConfig = $config->get('session', []);
-
-        if (!empty($sessionConfig)) {
-            Session::register($sessionConfig);
-        }
-
         $this->container->setBindings($this, [
             'resolver' => 'registerResolverBinder',
             'exception.handler' => 'registerExceptionBinder',
@@ -672,5 +661,32 @@ class Application
             'acl' => 'registerAclBinder',
             'db' => 'registerDbBinder',
         ]);
+    }
+
+    public function marshalConfigKeys()
+    {
+        $config = $this->container->get('config');
+
+        foreach((array) $config->get('middleware', []) as $middleware) {
+            if (is_array($middleware)) {
+                $this->add($middleware[0], $middleware[1]);
+            } else {
+                $this->add($middleware);
+            }
+        }
+
+        $this->container->configure(
+            $config->get('dependencies', [])
+        );
+
+        \MicroLoader::addFiles(
+            $config->get('microloader.files', [])
+        );
+
+        $sessionConfig = $config->get('session', []);
+
+        if (!empty($sessionConfig)) {
+            Session::register($sessionConfig);
+        }
     }
 }

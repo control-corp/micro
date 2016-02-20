@@ -3,6 +3,7 @@
 return [
     'config_cache_enabled' => false,
     'middleware' => [
+        App\Middleware\Test::class,
     ],
     'micro_debug' => [
         'handlers' => [

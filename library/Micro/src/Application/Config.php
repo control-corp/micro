@@ -38,7 +38,7 @@ class Config implements \ArrayAccess
      */
     public function load(array $data)
     {
-        $this->config = \array_replace_recursive(
+        $this->config = Utils::merge(
             $this->config,
             $data
         );

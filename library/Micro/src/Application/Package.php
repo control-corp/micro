@@ -17,9 +17,20 @@ abstract class Package
     protected $dir;
 
     /**
+     * Constructor
+     * @param ContainerInterface $container
+     */
+    public function __construct(ContainerInterface $container)
+    {
+        if (method_exists($this, 'getConfig')) {
+            $container->get('config')->load($this->getConfig());
+        }
+    }
+
+    /**
      * Some initializations like config, services and events
      */
-    public function boot(Application $app, ContainerInterface $container)
+    public function boot(ContainerInterface $container)
     {}
 
     /**
