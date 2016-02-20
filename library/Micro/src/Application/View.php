@@ -20,7 +20,7 @@ class View
 
     protected $renderParent = \true;
 
-    protected $package;
+    protected $module;
 
     protected $resolvedPaths = [];
 
@@ -371,12 +371,12 @@ class View
     }
 
     /**
-     * @param string $package
+     * @param string $module
      * @return View
      */
-    public function widget($package)
+    public function widget($module)
     {
-        $this->package = $package;
+        $this->module = $module;
 
         return $this;
     }
@@ -394,16 +394,16 @@ class View
         if (!isset(static::$helpers[$method])) {
 
             $search = [];
-            $packages = [];
+            $modules = [];
 
-            if (\null !== $this->package) {
-                $packages = [$this->package];
+            if (\null !== $this->module) {
+                $modules = [$this->module];
             } else {
-                $packages = array_keys(\app('app')->getPackages());
+                $modules = array_keys(\app('app')->getModules());
             }
 
-            foreach ($packages as $package) {
-                $search[] = $helper = $package . '\\View\\' . \ucfirst($method);
+            foreach ($modules as $module) {
+                $search[] = $helper = $module . '\\View\\' . \ucfirst($method);
                 if (\class_exists($helper, \true)) {
                     static::$helpers[$method] = new $helper($this);
                     break;
@@ -415,7 +415,7 @@ class View
             }
         }
 
-        $this->package = \null;
+        $this->module = \null;
 
         return \call_user_func_array(static::$helpers[$method], $params);
     }

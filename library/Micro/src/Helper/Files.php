@@ -2,21 +2,21 @@
 
 namespace Micro\Helper;
 
-use Micro\Application\Package;
+use Micro\Application\Module;
 
 class Files
 {
     public static function fetchControllers($dirs = \null)
     {
         if ($dirs === \null) {
-            $dirs = config('packages', []);
+            $dirs = config('modules', []);
         }
 
         $resources = [];
 
         foreach ($dirs as $dir) {
 
-            if ($dir instanceof Package) {
+            if ($dir instanceof Module) {
                 $dir = $dir->getDir();
             }
 

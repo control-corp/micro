@@ -33,7 +33,7 @@ class Application
     /**
      * @var array
      */
-    private $packages = [];
+    private $modules = [];
 
     /**
      * @var array of collected Exceptions
@@ -116,7 +116,7 @@ class Application
     }
 
     /**
-     * Unpackage the application request
+     * Dispatch the application request
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
@@ -292,11 +292,11 @@ class Application
 
         $currentRoute = $this->container->get('router')->getCurrentRoute();
 
-        $package = current($errorHandler);
+        $module = current($errorHandler);
 
         if ($currentRoute) {
             if (isset($errorHandler[$currentRoute->getName()])) {
-                $package = $errorHandler[$currentRoute->getName()];
+                $module = $errorHandler[$currentRoute->getName()];
             }
         }
 
@@ -305,7 +305,7 @@ class Application
         $resolver = $this->container->get('resolver');
 
         if (\is_object($resolver) && \method_exists($resolver, 'resolve')) {
-            return $resolver->resolve($package, $request, $response);
+            return $resolver->resolve($module, $request, $response);
         }
 
         throw new CoreException(\sprintf('Resolver [%s] does not have method "resolve"', \is_object($resolver) ? get_class($resolver) : gettype($resolver)), 500);
@@ -321,32 +321,32 @@ class Application
             return;
         }
 
-        $packages = $this->container->get('config')->get('packages', []);
+        $modules = $this->container->get('config')->get('modules', []);
 
-        foreach ($packages as $package => $path) {
+        foreach ($modules as $module => $path) {
 
-            require $path . '/Package.php';
+            require $path . '/Module.php';
 
-            $packageInstance = $package . '\\Package';
+            $moduleInstance = $module . '\\Module';
 
-            if (\class_exists($packageInstance, \true)) {
+            if (\class_exists($moduleInstance, \true)) {
 
-                $instance = new $packageInstance($this->container);
+                $instance = new $moduleInstance($this->container);
 
-                if (!$instance instanceof Package) {
-                    throw new CoreException(\sprintf('%s must be instance of Micro\Application\Package', $packageInstance), 500);
+                if (!$instance instanceof Module) {
+                    throw new CoreException(\sprintf('%s must be instance of Micro\Application\Module', $moduleInstance), 500);
                 }
 
-                \MicroLoader::addPath($package, $path . '/src');
+                \MicroLoader::addPath($module, $path . '/src');
 
                 $instance->boot($this->container);
 
-                $this->packages[$package] = $instance;
+                $this->modules[$module] = $instance;
 
                 continue;
             }
 
-            throw new CoreException(sprintf('[' . __METHOD__ . '] Package [%s] is loaded but class [%s\Package] is missing', $package, $package));
+            throw new CoreException(sprintf('[' . __METHOD__ . '] Module [%s] is loaded but class [%s\Module] is missing', $module, $module));
         }
 
         $this->marshalConfigKeys();
@@ -355,16 +355,16 @@ class Application
     }
 
     /**
-     * @param string $package
+     * @param string $module
      * @return array|null
      */
-    public function matchResolve($package)
+    public function matchResolve($module)
     {
-        if (!\is_string($package)) {
+        if (!\is_string($module)) {
             return \null;
         }
 
-        if (\preg_match('~^([^\@]+)\@([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$~', $package, $matches)) {
+        if (\preg_match('~^([^\@]+)\@([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)$~', $module, $matches)) {
             return [$matches[1], $matches[2]];
         }
 
@@ -372,160 +372,160 @@ class Application
     }
 
     /**
-     * @param mixed $package
+     * @param mixed $module
      * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @param bool $subRequest
      * @throws CoreException
      * @return ResponseInterface
      */
-    public function resolve($package, ServerRequestInterface $request, ResponseInterface $response, $subRequest = \false)
+    public function resolve($module, ServerRequestInterface $request, ResponseInterface $response, $subRequest = \false)
     {
-        if ($package instanceof ResponseInterface) {
-            return $package;
+        if ($module instanceof ResponseInterface) {
+            return $module;
         }
 
-        if (($matches = $this->matchResolve($package)) === \null) {
+        if (($matches = $this->matchResolve($module)) === \null) {
 
-            if (\is_string($package) || (\is_object($package) && \method_exists($package, '__toString'))) {
+            if (\is_string($module) || (\is_object($module) && \method_exists($module, '__toString'))) {
 
-                $response->getBody()->write((string) $package);
+                $response->getBody()->write((string) $module);
 
                 return $response;
             }
 
-            throw new CoreException(\sprintf('Package [%s] must be in [Handler@action] format', (\is_object($package) ? \get_class($package) : $package)));
+            throw new CoreException(\sprintf('Module [%s] must be in [Handler@action] format', (\is_object($module) ? \get_class($module) : $module)));
         }
 
-        $package = $matches[0];
+        $module = $matches[0];
         $action = $matches[1];
 
-        if ($this->container->has($package)) {
+        if ($this->container->has($module)) {
 
-            $packageInstance = $this->container->get($package);
+            $moduleInstance = $this->container->get($module);
 
-            if (!\is_object($packageInstance) || $packageInstance instanceof \Closure) {
-                throw new CoreException('Package "' . $package . '" is container service but it is not object', 500);
+            if (!\is_object($moduleInstance) || $moduleInstance instanceof \Closure) {
+                throw new CoreException('Module "' . $module . '" is container service but it is not object', 500);
             }
 
-            $package = \get_class($packageInstance);
+            $module = \get_class($moduleInstance);
 
         } else {
 
-            if (!\class_exists($package, \true)) {
-                throw new CoreException('Package class "' . $package . '" not found', 404);
+            if (!\class_exists($module, \true)) {
+                throw new CoreException('Module class "' . $module . '" not found', 404);
             }
 
-            $packageInstance = new $package($request, $response, $this->container);
+            $moduleInstance = new $module($request, $response, $this->container);
 
-            if ($packageInstance instanceof ContainerAwareInterface) {
-                $packageInstance->setContainer($this->container);
+            if ($moduleInstance instanceof ContainerAwareInterface) {
+                $moduleInstance->setContainer($this->container);
             }
         }
 
-        $parts = explode('\\', $package);
+        $parts = explode('\\', $module);
 
-        $packageParam = Utils::decamelize($parts[0]);
+        $moduleParam = Utils::decamelize($parts[0]);
         $controllerParam = Utils::decamelize($parts[count($parts) - 1]);
         $actionParam = Utils::decamelize($action);
 
-        $request->withAttribute('package', $packageParam);
+        $request->withAttribute('module', $moduleParam);
         $request->withAttribute('controller', $controllerParam);
         $request->withAttribute('action', $actionParam);
 
-        if ($packageInstance instanceof Controller) {
+        if ($moduleInstance instanceof Controller) {
             $action = $action . 'Action';
         }
 
-        if (!\method_exists($packageInstance, $action) && !\method_exists($packageInstance, '__call')) {
-            throw new CoreException('Method "' . $action . '" not found in "' . get_class($packageInstance) . '"', 404);
+        if (!\method_exists($moduleInstance, $action) && !\method_exists($moduleInstance, '__call')) {
+            throw new CoreException('Method "' . $action . '" not found in "' . get_class($moduleInstance) . '"', 404);
         }
 
         $scope = '';
 
-        if ($packageInstance instanceof Controller) {
-            $packageInstance->init();
-            $scope = $packageInstance->getScope();
+        if ($moduleInstance instanceof Controller) {
+            $moduleInstance->init();
+            $scope = $moduleInstance->getScope();
         }
 
-        if (($packageResponse = $packageInstance->$action()) instanceof ResponseInterface) {
-            return $packageResponse;
+        if (($moduleResponse = $moduleInstance->$action()) instanceof ResponseInterface) {
+            return $moduleResponse;
         }
 
-        if (\is_object($packageResponse) && !$packageResponse instanceof View) {
-            throw new CoreException('Package response is object and must be instance of View', 500);
+        if (\is_object($moduleResponse) && !$moduleResponse instanceof View) {
+            throw new CoreException('Module response is object and must be instance of View', 500);
         }
 
         // resolve View object
 
-        if ($packageResponse === \null || is_array($packageResponse)) {
+        if ($moduleResponse === \null || is_array($moduleResponse)) {
 
-            if ($packageInstance instanceof Controller) {
-                $view = $packageInstance->getView();
+            if ($moduleInstance instanceof Controller) {
+                $view = $moduleInstance->getView();
             } else {
                 $view = new View();
             }
 
-            if (is_array($packageResponse)) {
-                $view->assign($packageResponse);
+            if (is_array($moduleResponse)) {
+                $view->assign($moduleResponse);
             }
 
-            $packageResponse = $view;
+            $moduleResponse = $view;
         }
 
-        if ($packageResponse instanceof View) {
+        if ($moduleResponse instanceof View) {
 
-            if ($packageResponse->getTemplate() === \null) {
-                $packageResponse->setTemplate(($scope ? $scope . '/' : '') . $controllerParam . '/' . $actionParam);
+            if ($moduleResponse->getTemplate() === \null) {
+                $moduleResponse->setTemplate(($scope ? $scope . '/' : '') . $controllerParam . '/' . $actionParam);
             }
 
             try {
-                $packageResponse->addPath(package_path($parts[0], '/views'), $packageParam);
-                $packageResponse->addPath(config('view.paths', []));
+                $moduleResponse->addPath(module_path($parts[0], '/views'), $moduleParam);
+                $moduleResponse->addPath(config('view.paths', []));
             } catch (\Exception $e) {
 
             }
 
             if ($this->useEvent === \true
-                && ($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $packageResponse])) instanceof ResponseInterface
+                && ($eventResponse = $this->container->get('event')->trigger('render.start', ['view' => $moduleResponse])) instanceof ResponseInterface
             ) {
                 return $eventResponse;
             }
 
             if ($subRequest) {
-                $packageResponse->setRenderParent(\false);
+                $moduleResponse->setRenderParent(\false);
             }
 
-            $response->getBody()->write((string) $packageResponse->render());
+            $response->getBody()->write((string) $moduleResponse->render());
 
         } else {
 
-            $response->getBody()->write((string) $packageResponse);
+            $response->getBody()->write((string) $moduleResponse);
         }
 
         return $response;
     }
 
     /**
-     * @return array of Package 's
+     * @return array of Module 's
      */
-    public function getPackages()
+    public function getModules()
     {
-        return $this->packages;
+        return $this->modules;
     }
 
     /**
-     * @param string $package
+     * @param string $module
      * @throws CoreException
-     * @return Package
+     * @return Module
      */
-    public function getPackage($package)
+    public function getModule($module)
     {
-        if (!isset($this->packages[$package])) {
-            throw new CoreException('Package "' . $package . '" not found');
+        if (!isset($this->modules[$module])) {
+            throw new CoreException('Module "' . $module . '" not found');
         }
 
-        return $this->packages[$package];
+        return $this->modules[$module];
     }
 
     /**

@@ -23,7 +23,7 @@ class Crud extends Controller
      */
     public function indexAction()
     {
-        $package = $this->request->getParam('package');
+        $module = $this->request->getParam('module');
         $controller = $this->request->getParam('controller');
 
         if ($this->request->isPost()) {
@@ -63,7 +63,7 @@ class Crud extends Controller
 
         $grid = new Grid\Grid(
             $model,
-            package_path(ucfirst(Utils::camelize($package)), '/grids/' . ($this->scope ? $this->scope . '/' : '') . $controller . '.php')
+            module_path(ucfirst(Utils::camelize($module)), '/grids/' . ($this->scope ? $this->scope . '/' : '') . $controller . '.php')
         );
 
         $grid->getRenderer()->setView($this->view);
@@ -95,7 +95,7 @@ class Crud extends Controller
      */
     public function addAction(EntityInterface $entity = \null)
     {
-        $package = $this->request->getParam('package');
+        $module = $this->request->getParam('module');
         $controller = $this->request->getParam('controller');
 
         $model = $this->getModel();
@@ -104,7 +104,7 @@ class Crud extends Controller
             $entity = $model->createEntity();
         }
 
-        $form = new Form(package_path(ucfirst(Utils::camelize($package)), '/forms/' . ($this->scope ? $this->scope . '/' : '') . $controller . '-add.php'));
+        $form = new Form(module_path(ucfirst(Utils::camelize($module)), '/forms/' . ($this->scope ? $this->scope . '/' : '') . $controller . '-add.php'));
 
         $form->populate($entity->toArray());
 

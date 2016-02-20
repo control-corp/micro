@@ -43,7 +43,7 @@ class Expired extends Crud
             return $response;
         }
 
-        $form = new Form(package_path('Brands', '/forms/admin/expired-filters.php'));
+        $form = new Form(module_path('Brands', '/forms/admin/expired-filters.php'));
 
         $form->populate($this->view->filters);
 

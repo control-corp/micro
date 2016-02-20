@@ -19,16 +19,16 @@ trait DetectModelTrait
     public function getModel()
     {
         if ($this->model === \null) {
-            $package = $this->request->getParam('package');
+            $module = $this->request->getParam('module');
             $controller = $this->request->getParam('controller');
-            if ($package && $controller) {
-                $package = ucfirst(Utils::camelize($package));
+            if ($module && $controller) {
+                $module = ucfirst(Utils::camelize($module));
                 $controller = ucfirst(Utils::camelize($controller));
-                $model = $package . '\Model\\' . $controller;
+                $model = $module . '\Model\\' . $controller;
                 if (class_exists($model, \true)) {
                     $this->model = new $model;
                 } else {
-                    $model = $package . '\Model\\' . $package;
+                    $model = $module . '\Model\\' . $module;
                     if (class_exists($model, \true)) {
                         $this->model = new $model;
                     }

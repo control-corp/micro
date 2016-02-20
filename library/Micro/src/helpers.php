@@ -53,22 +53,22 @@ if (!function_exists('public_path')) {
     }
 }
 
-if (!function_exists('package_path')) {
-    function package_path($package, $path = \null)
+if (!function_exists('module_path')) {
+    function module_path($module, $path = \null)
     {
-        $packages = app('app')->getPackages();
+        $modules = app('app')->getModules();
 
-        if (!isset($packages[$package])) {
-            throw new CoreException(sprintf('[' . __FUNCTION__ . '] Invalid package "%s"', $package));
+        if (!isset($modules[$module])) {
+            throw new CoreException(sprintf('[' . __FUNCTION__ . '] Invalid module "%s"', $module));
         }
 
-        $packagePath = $packages[$package]->getDir();
+        $modulePath = $modules[$module]->getDir();
 
         if ($path !== \null) {
-            $packagePath .= DIRECTORY_SEPARATOR . trim($path, '/\\');
+            $modulePath .= DIRECTORY_SEPARATOR . trim($path, '/\\');
         }
 
-        return $packagePath;
+        return $modulePath;
     }
 }
 
@@ -269,22 +269,22 @@ if (!function_exists('is_allowed')) {
 }
 
 if (!function_exists('forward')) {
-    function forward($package, array $params = [], $subRequest = \false)
+    function forward($module, array $params = [], $subRequest = \false)
     {
         $request = clone app('request');
         $request->setParams($params);
 
-        return app('resolver')->resolve($package, $request, clone app('response'), $subRequest);
+        return app('resolver')->resolve($module, $request, clone app('response'), $subRequest);
     }
 }
 
 if (!function_exists('widget')) {
-    function widget($package, array $params = [])
+    function widget($module, array $params = [])
     {
         $request = clone app('request');
         $request->setParams($params);
 
-        return app('resolver')->resolve($package, $request, clone app('response'), \true)->getBody();
+        return app('resolver')->resolve($module, $request, clone app('response'), \true)->getBody();
     }
 }
 

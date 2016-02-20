@@ -92,7 +92,7 @@ class Index extends Crud
 
         }
 
-        $form = new Form(package_path('Navigation', '/forms/admin/index-add-item.php'));
+        $form = new Form(module_path('Navigation', '/forms/admin/index-add-item.php'));
 
         $tree = new Helper\Tree($menu->getAlias());
 

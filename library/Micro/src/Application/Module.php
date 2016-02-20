@@ -4,7 +4,7 @@ namespace Micro\Application;
 
 use Micro\Container\ContainerInterface;
 
-abstract class Package
+abstract class Module
 {
     /**
      * @var string

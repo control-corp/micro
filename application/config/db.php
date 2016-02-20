@@ -9,9 +9,9 @@ return [
             'localhost' => [
                 'adapter'  => 'mysqli',
                 'host'     => 'localhost',
-                'dbname'   => 'brands',
+                'dbname'   => 'brands_micro',
                 'username' => 'root',
-                'password' => 'root',
+                'password' => '',
                 'charset'  => 'utf8'
             ]
         ]

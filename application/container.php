@@ -13,7 +13,7 @@ if (is_file($cachedConfigFile)) {
     $config = include $cachedConfigFile;
 } else {
     // Load configuration from autoload path
-    foreach (glob('{application/config/*.php,application/config/packages/*.php}', GLOB_BRACE) as $file) {
+    foreach (glob('{application/config/*.php,application/config/modules/*.php}', GLOB_BRACE) as $file) {
         $config = Utils::merge($config, include $file);
     }
 
@@ -23,7 +23,7 @@ if (is_file($cachedConfigFile)) {
     }
 }
 
-$container = new Container(isset($config['dependencies']) ? $config['dependencies'] : []);
+$container = new Container();
 
 $container->set('config', new Config($config));
 

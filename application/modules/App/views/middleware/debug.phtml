@@ -108,14 +108,21 @@ echo pp(config());
 echo '</pre>';
 echo '</div>';
 
-$n = count(\MicroLoader::getFiles());
+$f  = \MicroLoader::getFiles();
+$fn = count($f);
+
+$n  = count(array_filter($f, function ($v) {
+    return $v != 'NOT EXISTS';
+}));
+
+$an = count(\MicroLoader::getAutoloaded());
 
 echo '<div class="debug-item">';
-echo '<h1>Classes (' . ($n - count(\MicroLoader::getAutoloaded())) . ' mapped / ' . $n . ' total)</h1>';
+echo '<h1>Classes (' . ($n - $an) . ' mapped / ' . $fn . ' total)</h1>';
 echo '<pre>';
-echo $n;
+echo $fn;
 echo '<br />';
-echo pp(\MicroLoader::getFiles());
+echo pp($f);
 echo '</pre>';
 echo '</div>';
 

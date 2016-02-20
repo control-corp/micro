@@ -236,62 +236,62 @@ class Router implements ContainerAwareInterface
     {
         if (!isset($this->routes['admin'])) {
 
-            $route = $this->map('/admin[/{package}][/{controller}][/{action}][/{id}]', function () {
+            $route = $this->map('/admin[/{module}][/{controller}][/{action}][/{id}]', function () {
 
                 static $cache = [];
 
                 $params = $this->getParams() + $this->getDefaults();
 
-                $package = $params['package'];
+                $module = $params['module'];
                 $controller = $params['controller'];
                 $action = $params['action'];
                 $id = $params['id'];
 
-                $hash = 'admin_' . $package . '_' . $controller . '_' . $action . '_' . $id;
+                $hash = 'admin_' . $module . '_' . $controller . '_' . $action . '_' . $id;
 
                 if (isset($cache[$hash])) {
                     return $cache[$hash];
                 }
 
-                $package = \ucfirst(Utils::camelize($package));
+                $module = \ucfirst(Utils::camelize($module));
                 $controller = \ucfirst(Utils::camelize($controller));
                 $action = \lcfirst(Utils::camelize($action));
 
-                return $cache[$hash] = $package . '\\Controller\Admin\\' . $controller . '@' . $action;
+                return $cache[$hash] = $module . '\\Controller\Admin\\' . $controller . '@' . $action;
 
             }, 'admin');
 
-            $route->setDefaults(['package' => 'app', 'controller' => 'index', 'action' => 'index', 'id' => \null]);
+            $route->setDefaults(['module' => 'app', 'controller' => 'index', 'action' => 'index', 'id' => \null]);
         }
 
         if (!isset($this->routes['default'])) {
 
-            $route = $this->map('/{package}[/{controller}][/{action}][/{id}]', function () {
+            $route = $this->map('/{module}[/{controller}][/{action}][/{id}]', function () {
 
                 static $cache = [];
 
                 $params = $this->getParams() + $this->getDefaults();
 
-                $package = $params['package'];
+                $module = $params['module'];
                 $controller = $params['controller'];
                 $action = $params['action'];
                 $id = $params['id'];
 
-                $hash = 'front_' . $package . '_' . $controller . '_' . $action . '_' . $id;
+                $hash = 'front_' . $module . '_' . $controller . '_' . $action . '_' . $id;
 
                 if (isset($cache[$hash])) {
                     return $cache[$hash];
                 }
 
-                $package = \ucfirst(Utils::camelize($package));
+                $module = \ucfirst(Utils::camelize($module));
                 $controller = \ucfirst(Utils::camelize($controller));
                 $action = \lcfirst(Utils::camelize($action));
 
-                return $cache[$hash] = $package . '\\Controller\\' . $controller . '@' . $action;
+                return $cache[$hash] = $module . '\\Controller\\' . $controller . '@' . $action;
 
             }, 'default');
 
-            $route->setDefaults(['package' => 'app', 'controller' => 'index', 'action' => 'index', 'id' => \null]);
+            $route->setDefaults(['module' => 'app', 'controller' => 'index', 'action' => 'index', 'id' => \null]);
         }
 
         return $this;

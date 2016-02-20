@@ -32,7 +32,7 @@ class Test
         if (\config('micro_debug.handlers.dev_tools')) {
 
             $view = $this->view = new View('debug');
-            $view->addPath(package_path('App', '/views/middleware'));
+            $view->addPath(module_path('App', '/views/middleware'));
 
             \app('event')->attach('render.start', function (Message $message) use ($view) {
                 $message->getParam('view')->section('styles', (string) $view->partial('css'));
@@ -51,24 +51,6 @@ class Test
 
     public function after(ResponseInterface $response)
     {
-        if (\config('micro_debug.handlers.dev_tools')) {
-
-            if ($response instanceof HtmlResponse) {
-
-                $body = $response->getBody();
-
-                if ($body->isSeekable()) {
-                    $body->rewind();
-                }
-
-                $b = $body->getContents();
-                $b = explode('</body>', $b);
-                $b[0] .= str_replace(array("\n", "\t", "\r"), "", $this->view->render()) . '</body>';
-
-                $response->withBody(new TempStream(implode('', $b)));
-            }
-        }
-
         if (config('micro_debug.handlers.fire_php')) {
 
             $db = \app('db');
@@ -100,13 +82,31 @@ class Test
                         foreach ($profiler->getQueryProfiles() as $k => $query) {
                             $table[] = [\sprintf('%.6f', $query->getElapsedSecs()) . ($k == $longestQuery ? ' !!!' : ''), $query->getQuery(), ($params = $query->getQueryParams()) ? $params : \null];
                         }
-                        FirePHP\FirePHP::getInstance()->table('DB - ' . $label, $table);
                     }
 
                     FirePHP\FirePHP::getInstance()->table('DB - ' . $label, $table);
                 }
             }
         }
+
+        if (\config('micro_debug.handlers.dev_tools')) {
+
+            if ($response instanceof HtmlResponse) {
+
+                $body = $response->getBody();
+
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
+
+                $b = $body->getContents();
+                $b = explode('</body>', $b);
+                $b[0] .= str_replace(array("\n", "\t", "\r"), "", $this->view->render()) . '</body>';
+
+                $response->withBody(new TempStream(implode('', $b)));
+            }
+        }
+
 
         if (($fileForCache = \config('micro_debug.handlers.performance')) !== \null) {
 

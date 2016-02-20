@@ -2,10 +2,10 @@
 
 namespace App;
 
-use Micro\Application\Package as BasePackage;
+use Micro\Application\Module as BaseModule;
 use Micro\Container\ContainerInterface;
 
-class Package extends BasePackage
+class Module extends BaseModule
 {
     public function boot(ContainerInterface $container)
     {
@@ -14,6 +14,6 @@ class Package extends BasePackage
 
     public function getConfig()
     {
-        return include __DIR__ . '/configs/package.php';
+        return include __DIR__ . '/configs/module.php';
     }
 }
