@@ -1,0 +1,27 @@
+<?php $this->extend('layouts/admin/default'); ?>
+
+<h1>Профил</h1>
+
+<form class="form-horizontal" action="<?php echo route(); ?>" method="post" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div class="form-group" style="margin-bottom: 0">
+                        <div class="col-md-6">
+                            <?php echo $this->form->username->renderLabel(); ?>
+                            <?php echo $this->form->username; ?>
+                        </div>
+                        <div class="col-md-6">
+                            <?php echo $this->form->password->renderLabel(); ?>
+                            <?php echo $this->form->password; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <input type="submit" class="btn btn-primary" name="btnSave" value="Запазване" />
+    </div>
+</form>

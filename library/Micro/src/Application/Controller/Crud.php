@@ -63,7 +63,7 @@ class Crud extends Controller
 
         $grid = new Grid\Grid(
             $model,
-            module_path(ucfirst(Utils::camelize($module)), '/grids/' . ($this->scope ? $this->scope . '/' : '') . $controller . '.php')
+            module_path(ucfirst(Utils::camelize($module)), '/Resources/grids/' . ($this->scope ? $this->scope . '/' : '') . $controller . '.php')
         );
 
         $grid->getRenderer()->setView($this->view);
@@ -104,7 +104,7 @@ class Crud extends Controller
             $entity = $model->createEntity();
         }
 
-        $form = new Form(module_path(ucfirst(Utils::camelize($module)), '/forms/' . ($this->scope ? $this->scope . '/' : '') . $controller . '-add.php'));
+        $form = new Form(module_path(ucfirst(Utils::camelize($module)), '/Resources/forms/' . ($this->scope ? $this->scope . '/' : '') . $controller . '-add.php'));
 
         $form->populate($entity->toArray());
 

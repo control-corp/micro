@@ -7,5 +7,7 @@ return [
         'Pages' => 'application/modules/Pages',
         'Brands' => 'application/modules/Brands',
         'Nomenclatures' => 'application/modules/Nomenclatures',
+        'UserManagement' => 'application/modules/UserManagement',
+        'Mail' => 'application/modules/Mail',
     ]
 ];

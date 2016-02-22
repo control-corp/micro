@@ -81,6 +81,8 @@ class Application
 
             $this->boot();
 
+            $this->marshalConfigKeys();
+
             if ($this->useEvent === \true
                 && ($eventResponse = $this->container->get('event')->trigger('application.start')) instanceof ResponseInterface
             ) {
@@ -314,18 +316,19 @@ class Application
     /**
      * Boot the application
      * @throws CoreException
+     * @return Application
      */
     public function boot()
     {
         if (\true === $this->booted) {
-            return;
+            return $this;
         }
 
         $modules = $this->container->get('config')->get('modules', []);
 
-        foreach ($modules as $module => $path) {
+        \MicroLoader::addPath($modules);
 
-            require $path . '/Module.php';
+        foreach ($modules as $module => $path) {
 
             $moduleInstance = $module . '\\Module';
 
@@ -337,8 +340,6 @@ class Application
                     throw new CoreException(\sprintf('%s must be instance of Micro\Application\Module', $moduleInstance), 500);
                 }
 
-                \MicroLoader::addPath($module, $path . '/src');
-
                 $instance->boot($this->container);
 
                 $this->modules[$module] = $instance;
@@ -349,9 +350,9 @@ class Application
             throw new CoreException(sprintf('[' . __METHOD__ . '] Module [%s] is loaded but class [%s\Module] is missing', $module, $module));
         }
 
-        $this->marshalConfigKeys();
-
         $this->booted = \true;
+
+        return $this;
     }
 
     /**
@@ -387,6 +388,7 @@ class Application
 
         if (($matches = $this->matchResolve($module)) === \null) {
 
+            // write string to the response
             if (\is_string($module) || (\is_object($module) && \method_exists($module, '__toString'))) {
 
                 $response->getBody()->write((string) $module);
@@ -394,7 +396,7 @@ class Application
                 return $response;
             }
 
-            throw new CoreException(\sprintf('Module [%s] must be in [Handler@action] format', (\is_object($module) ? \get_class($module) : $module)));
+            throw new CoreException(\sprintf('Handler [%s] must be in [Handler@action] format', (\is_object($module) ? \get_class($module) : $module)));
         }
 
         $module = $matches[0];
@@ -405,7 +407,7 @@ class Application
             $moduleInstance = $this->container->get($module);
 
             if (!\is_object($moduleInstance) || $moduleInstance instanceof \Closure) {
-                throw new CoreException('Module "' . $module . '" is container service but it is not object', 500);
+                throw new CoreException('Handler "' . $module . '" is container service but it is not object', 500);
             }
 
             $module = \get_class($moduleInstance);
@@ -413,7 +415,7 @@ class Application
         } else {
 
             if (!\class_exists($module, \true)) {
-                throw new CoreException('Module class "' . $module . '" not found', 404);
+                throw new CoreException('Handler class "' . $module . '" not found', 404);
             }
 
             $moduleInstance = new $module($request, $response, $this->container);
@@ -438,13 +440,16 @@ class Application
         }
 
         if (!\method_exists($moduleInstance, $action) && !\method_exists($moduleInstance, '__call')) {
-            throw new CoreException('Method "' . $action . '" not found in "' . get_class($moduleInstance) . '"', 404);
+            throw new CoreException('Method "' . $action . '" not found in "' . $module . '"', 404);
+        }
+
+        if ($moduleInstance instanceof Controller) {
+            $moduleInstance->init();
         }
 
         $scope = '';
 
-        if ($moduleInstance instanceof Controller) {
-            $moduleInstance->init();
+        if (\method_exists($moduleInstance, 'getScope')) {
             $scope = $moduleInstance->getScope();
         }
 
@@ -453,7 +458,7 @@ class Application
         }
 
         if (\is_object($moduleResponse) && !$moduleResponse instanceof View) {
-            throw new CoreException('Module response is object and must be instance of View', 500);
+            throw new CoreException('Handler response is object and must be instance of View', 500);
         }
 
         // resolve View object
@@ -480,7 +485,7 @@ class Application
             }
 
             try {
-                $moduleResponse->addPath(module_path($parts[0], '/views'), $moduleParam);
+                $moduleResponse->addPath(module_path($parts[0], '/Resources/views'), $moduleParam);
                 $moduleResponse->addPath(config('view.paths', []));
             } catch (\Exception $e) {
 
@@ -667,26 +672,30 @@ class Application
     {
         $config = $this->container->get('config');
 
-        foreach((array) $config->get('middleware', []) as $middleware) {
-            if (is_array($middleware)) {
-                $this->add($middleware[0], $middleware[1]);
-            } else {
-                $this->add($middleware);
+        $middlewares = $config->get('middleware', []);
+        if (!empty($middlewares)) {
+            foreach($middlewares as $middleware) {
+                if (is_array($middleware)) {
+                    $this->add($middleware[0], $middleware[1]);
+                } else {
+                    $this->add($middleware);
+                }
             }
         }
 
-        $this->container->configure(
-            $config->get('dependencies', [])
-        );
+        $dependencies = $config->get('dependencies', []);
+        if (!empty($dependencies)) {
+            $this->container->configure($dependencies);
+        }
 
-        \MicroLoader::addFiles(
-            $config->get('microloader.files', [])
-        );
+        $files = $config->get('microloader.files', []);
+        if (!empty($files)) {
+            \MicroLoader::addFiles($files);
+        }
 
-        $sessionConfig = $config->get('session', []);
-
-        if (!empty($sessionConfig)) {
-            Session::register($sessionConfig);
+        $session = $config->get('session', []);
+        if (!empty($session)) {
+            Session::register($session);
         }
     }
 }

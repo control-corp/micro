@@ -1,0 +1,11 @@
+<?php
+
+$this->extend('layouts/admin/default');
+
+echo '<h1>Грешка !!!</h1>';
+
+echo '<h2>' . $this->message . '</h2>';
+
+if (env('development') && $this->exception instanceof \Exception) {
+    echo '<pre>' . $this->exception->getTraceAsString() . '</pre>';
+}

@@ -1,0 +1,27 @@
+<?php $this->extend('layouts/admin/default'); ?>
+
+<h1>Настройки</h1>
+
+<form class="form-horizontal" method="post" action="<?php echo route(); ?>">
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Ключ</th>
+                        <th>Стойност</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($this->settings as $k => $v) : ?>
+                    <tr>
+                        <td style="vertical-align: middle;"><?php echo $k; ?></td>
+                        <td><input class="form-control" name="<?php echo $k; ?>" type="text" value="<?php echo $v; ?>" /></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <input type="submit" class="btn btn-primary" name="btnSave" value="Запазване" />
+</form>
