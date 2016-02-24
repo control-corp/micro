@@ -9,6 +9,7 @@ use Micro\Paginator\Adapter\AdapterInterface;
 use Micro\Database\Table\Row\RowAbstract;
 use Micro\Database\Table\Rowset\RowsetAbstract;
 use Micro\Cache;
+use Micro\Event;
 
 abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
 {
@@ -21,6 +22,16 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
      * @var EntityInterface
      */
     protected $entity;
+
+    /**
+     * @var Event\Manager
+     */
+    protected $eventManager;
+
+    /**
+     * @var Cache\Core
+     */
+    protected $cache;
 
     /**
      * @var Select
@@ -37,21 +48,32 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
 
     protected static $transactionLevel = 0;
 
-    public function __construct()
-    {
-        if ($this->table === \null || !class_exists($this->table, \true)) {
-            throw new \Exception(get_class($this) . ' Table is not set or not exists');
+    public function __construct(
+        TableAbstract $table = \null,
+        $entity = \null,
+        Event\Manager $eventManager = \null,
+        Cache\Core $cache = \null
+    ) {
+
+        if ($table !== \null) {
+            $this->table = $table;
+        } else {
+            if ($this->table === \null || !is_string($this->table) || !class_exists($this->table, \true)) {
+                throw new \Exception(get_class($this) . ' Table is not set or not exists');
+            }
+            $this->table = new $this->table;
+            if (!$this->table instanceof TableAbstract) {
+                throw new \Exception(get_class($this) . ' Table is not instanceof ' . TableAbstract::class);
+            }
         }
 
-        if ($this->entity === \null || !class_exists($this->entity, \true)) {
-            throw new \Exception(get_class($this) . ' Entity is not set or not exists');
+        if ($entity !== \null) {
+            $this->entity = $entity;
         }
 
-        $this->table = new $this->table;
+        $this->eventManager = $eventManager === \null ? app('event') : $eventManager;
 
-        if (!$this->table instanceof TableAbstract) {
-            throw new \Exception(get_class($this) . ' Table is not instanceof ' . TableAbstract::class);
-        }
+        $this->cache = $cache === \null ? app('cache') : $cache;
     }
 
     public function getTable()
@@ -64,6 +86,10 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
      */
     public function createEntity()
     {
+        if ($this->entity === \null || !\class_exists($this->entity, \true)) {
+            throw new \Exception(\get_class($this) . ' Entity is not set or not exists');
+        }
+
         $entity = new $this->entity;
 
         if (!$entity instanceof EntityInterface) {
@@ -613,7 +639,7 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
         $cache = \null;
 
         if ($cacheIt !== \false) {
-            $cache = app('cache');
+            $cache = $this->cache;
         }
 
         if ($where !== \null) {
@@ -656,7 +682,7 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
 
             $pairs = $adapter->fetchPairs($select);
 
-            if ($cache instanceof Cache\Core) {
+            if ($cache !== \null) {
                 $cache->save($pairs, $cacheId, array($this->getCacheId()));
             }
         }
@@ -708,9 +734,8 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
     public function removeCache()
     {
         try {
-            $cache = app('cache');
-            if ($cache instanceof Cache\Core) {
-                $cache->clean(Cache\Cache::CLEANING_MODE_MATCHING_TAG, array($this->getCacheId()));
+            if ($this->cache instanceof Cache\Core) {
+                $this->cache->clean(Cache\Cache::CLEANING_MODE_MATCHING_TAG, array($this->getCacheId()));
             }
         } catch (\Exception $e) {
 
@@ -724,9 +749,13 @@ abstract class DatabaseAbstract implements AdapterInterface, ModelInterface
 
     public function trigger($event, array $params = \null)
     {
+        if ($this->eventManager === \null) {
+            return;
+        }
+
         $event = str_replace('\\', '.', get_class($this)) . '.' . ucfirst($event);
 
-        app('event')->trigger($event, $params);
+        $this->eventManager->trigger($event, $params);
     }
 
     public static function __callstatic($name, $args)

@@ -18,6 +18,8 @@ trait DetectModelTrait
      */
     public function getModel()
     {
+        $modelCandidate = \null;
+
         if ($this->model === \null) {
             $module = $this->request->getParam('module');
             $controller = $this->request->getParam('controller');
@@ -25,23 +27,31 @@ trait DetectModelTrait
                 $module = ucfirst(Utils::camelize($module));
                 $controller = ucfirst(Utils::camelize($controller));
                 $model = $module . '\Model\\' . $controller;
-                if (class_exists($model, \true)) {
-                    $this->model = new $model;
+                if (\class_exists($model, \true)) {
+                    $modelCandidate = $model;
                 } else {
                     $model = $module . '\Model\\' . $module;
-                    if (class_exists($model, \true)) {
-                        $this->model = new $model;
+                    if (\class_exists($model, \true)) {
+                        $modelCandidate = $model;
                     }
                 }
             }
-        } else if (is_string($this->model) && class_exists($this->model, \true)) {
-            $this->model = new $this->model;
+        } else if (\is_string($this->model) && \class_exists($this->model, \true)) {
+            $modelCandidate = $this->model;
+        }
+
+        if ($modelCandidate !== \null) {
+            if ($this->container->has($modelCandidate)) {
+                $this->model = $this->container->get($modelCandidate);
+            } else {
+                $this->model = new $modelCandidate;
+            }
         }
 
         if (!$this->model instanceof ModelInterface) {
-            throw new \Exception(sprintf(
+            throw new \Exception(\sprintf(
                 'Model [%s] must be instanceof %s',
-                (is_object($this->model) ? get_class($this->model) : gettype($this->model)),
+                (is_object($this->model) ? get_class($this->model) : (\is_string($this->model) ? $this->model : \gettype($this->model))),
                 ModelInterface::class
             ));
         }

@@ -9,7 +9,6 @@ use Micro\Model\DatabaseAbstract;
 class Users extends DatabaseAbstract
 {
     protected $table = Table\Users::class;
-
     protected $entity = Entity\User::class;
 
     public function login($username, $password)
