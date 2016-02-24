@@ -612,7 +612,7 @@ class Application
         $this->container->set('db', function ($container) use ($config) {
             $default  = $config->get('db.default');
             $adapters = $config->get('db.adapters', []);
-            if (!isset($adapters[$default])) {
+            if (!isset($adapters[$default]) || !isset($adapters[$default]['adapter'])) {
                 return \null;
             }
             return Database::factory($adapters[$default]['adapter'], $adapters[$default]);

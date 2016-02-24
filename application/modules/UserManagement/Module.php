@@ -6,6 +6,7 @@ use Micro\Application\Module as BaseModule;
 use Micro\Acl\Acl;
 use Micro\Cache;
 use Micro\Container\ContainerInterface;
+use Micro\Database\Adapter\AdapterAbstract;
 
 class Module extends BaseModule
 {
@@ -26,16 +27,17 @@ class Module extends BaseModule
          */
         Acl::setResolver(function () {
 
-            $cache = app('cache');
             $db = app('db');
 
-            if (!$db) {
+            if (!$db instanceof AdapterAbstract) {
                 return [];
             }
 
+            $cache = app('cache');
+
             if ($cache === \null || ($data = $cache->load('Acl')) === \false) {
 
-                $groups = app('db')->fetchAll('
+                $groups = $db->fetchAll('
                     SELECT a.alias, b.alias as parentAlias, a.rights
                     FROM Groups a
                     LEFT JOIN Groups b ON b.id = a.parentId
