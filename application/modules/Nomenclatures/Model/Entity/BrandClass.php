@@ -4,7 +4,6 @@ namespace Nomenclatures\Model\Entity;
 
 use Micro\Model\EntityAbstract;
 
-
 class BrandClass extends EntityAbstract
 {
     protected $id;

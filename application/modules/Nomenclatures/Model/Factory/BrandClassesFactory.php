@@ -4,9 +4,9 @@ namespace Nomenclatures\Model\Factory;
 
 use Micro\Container\ContainerFactoryInterface;
 use Micro\Container\ContainerInterface;
-use Nomenclatures\Model\BrandClasses as ModelBrandClasses;
-use Nomenclatures\Model\Table\BrandClasses as TableBrandClasses;
-use Nomenclatures\Model\Entity\BrandClass as EntityBrandClasses;
+use Nomenclatures\Model\BrandClasses as Model;
+use Nomenclatures\Model\Table\BrandClasses as Table;
+use Nomenclatures\Model\Entity\BrandClass as Entity;
 
 class BrandClassesFactory implements ContainerFactoryInterface
 {
@@ -16,11 +16,11 @@ class BrandClassesFactory implements ContainerFactoryInterface
      */
     public function create(ContainerInterface $container, $service)
     {
-        return new ModelBrandClasses(
-            new TableBrandClasses(
+        return new Model(
+            new Table(
                 $container->get('db')
             ),
-            EntityBrandClasses::class,
+            Entity::class,
             $container->get('event'),
             $container->get('cache')
         );

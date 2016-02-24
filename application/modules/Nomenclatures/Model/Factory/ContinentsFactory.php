@@ -4,9 +4,9 @@ namespace Nomenclatures\Model\Factory;
 
 use Micro\Container\ContainerFactoryInterface;
 use Micro\Container\ContainerInterface;
-use Nomenclatures\Model\Continents as ModelContinents;
-use Nomenclatures\Model\Table\Continents as TableContinents;
-use Nomenclatures\Model\Entity\Continent as EntityContinents;
+use Nomenclatures\Model\Continents as Model;
+use Nomenclatures\Model\Table\Continents as Table;
+use Nomenclatures\Model\Entity\Continent as Entity;
 
 class ContinentsFactory implements ContainerFactoryInterface
 {
@@ -16,11 +16,11 @@ class ContinentsFactory implements ContainerFactoryInterface
      */
     public function create(ContainerInterface $container, $service)
     {
-        return new ModelContinents(
-            new TableContinents(
+        return new Model(
+            new Table(
                 $container->get('db')
             ),
-            EntityContinents::class,
+            Entity::class,
             $container->get('event'),
             $container->get('cache')
         );
